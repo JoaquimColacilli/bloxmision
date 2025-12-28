@@ -1,0 +1,109 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============ HELPER FUNCTIONS ============
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.email == 'admin@bloxmision.com';
+    }
+    
+    // ============ USERS COLLECTION ============
+    // Users can only read/write their own document
+    // Validates data ranges to prevent obvious cheating
+    
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // CREATE: Only own document with valid initial data
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.totalXP == 0
+        && request.resource.data.currentWorld == 1
+        && request.resource.data.currentLevel == 1
+        && request.resource.data.playerLevel == 'Grumete';
+      
+      // UPDATE: Own document with reasonable limits
+      allow update: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.totalXP >= 0
+        && request.resource.data.totalXP <= 100000  // Cap XP to prevent abuse
+        && request.resource.data.currentWorld >= 1 
+        && request.resource.data.currentWorld <= 10
+        && request.resource.data.currentLevel >= 1
+        && request.resource.data.currentLevel <= 50
+        // XP can only increase or stay same (no rollback cheating)
+        && request.resource.data.totalXP >= resource.data.totalXP;
+      
+      // DELETE: Never allow client-side deletion
+      allow delete: if false;
+    }
+    
+    // ============ PROGRESS COLLECTION ============
+    // Immutable records of level completions
+    // Only CREATE allowed (no updates/deletes)
+    
+    match /progress/{progressId} {
+      // READ: Only own progress records
+      allow read: if isAuthenticated() 
+        && resource.data.userId == request.auth.uid;
+      
+      // CREATE: Validate required fields and reasonable limits
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.completed == true
+        && request.resource.data.attempts >= 1
+        && request.resource.data.attempts <= 1000  // Reasonable limit
+        && request.resource.data.xpEarned >= 0
+        && request.resource.data.xpEarned <= 200   // Max possible XP per level
+        && request.resource.data.usedHints >= 0
+        && request.resource.data.levelId is string
+        && request.resource.data.completedAt != null;
+      
+      // IMMUTABLE: No updates or deletes allowed
+      allow update, delete: if false;
+    }
+    
+    // ============ LEVELS COLLECTION ============
+    // Game data - read-only for players, admin can write
+    
+    match /levels/{levelId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // ============ WORLDS COLLECTION ============
+    // Game data - read-only for players
+    
+    match /worlds/{worldId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // ============ MAP FRAGMENTS COLLECTION ============
+    // Game collectibles - read-only
+    
+    match /mapFragments/{fragmentId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // ============ LEADERBOARD COLLECTION ============
+    // Public read, no client writes
+    
+    match /leaderboard/{entry} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
