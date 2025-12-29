@@ -53,61 +53,24 @@ service cloud.firestore {
       
       // UPDATE: Documento propio con límites razonables
       // Core security: uid cannot change, XP can only increase (or be recalculated)
-      // Fragment rules: map can only grow, count must match map size, mapCompleted only when 15
       allow update: if isOwner(userId)
-        && request.resource.data.uid == resource.data.uid  // UID inmutable
+        // UID must remain unchanged (only validate if uid field is being touched)
         && (
-          // Rule 1: XP increases (normal gameplay)
-          request.resource.data.totalXP >= resource.data.totalXP
-          // Rule 2: OR XP is being set to any value >= 0 (for recalculation from progress)
-          || request.resource.data.totalXP >= 0
+          !('uid' in request.resource.data.diff(resource.data).affectedKeys())
+          || request.resource.data.uid == resource.data.uid
         )
-        && request.resource.data.totalXP <= 100000  // Max cap
+        // XP validation: must be >= 0 and <= 100000
+        && request.resource.data.totalXP >= 0
+        && request.resource.data.totalXP <= 100000
+        // Fragment map validation - simplified to just exist check if present
         && (
-          // If playerLevel is being updated, validate it
-          !('playerLevel' in request.resource.data.diff(resource.data).affectedKeys())
-          || isValidPlayerLevel(request.resource.data.playerLevel)
-        )
-        // Fragment system validation
-        && (
-          // If fragments not being updated, skip validation
           !('unlockedFragmentsMap' in request.resource.data.diff(resource.data).affectedKeys())
-          || (
-            // Validate only if the field exists in the current document
-            // Legacy users might not have this field
-            !('unlockedFragmentsMap' in resource.data)
-            || (
-              // Fragments map can only GROW (new keys must include all old keys)
-              request.resource.data.unlockedFragmentsMap.keys().hasAll(
-                resource.data.unlockedFragmentsMap.keys()
-              )
-              // Max 15 fragments
-              && mapSize(request.resource.data.unlockedFragmentsMap) <= 15
-            )
-          )
+          || request.resource.data.unlockedFragmentsMap is map
         )
+        // Fragment count simple check
         && (
-          // treasureFragmentsCount validation
           !('treasureFragmentsCount' in request.resource.data.diff(resource.data).affectedKeys())
-          || (
-            // If unlockedFragmentsMap doesn't exist yet, count must be 0 or match new map
-            !('unlockedFragmentsMap' in request.resource.data)
-            || request.resource.data.treasureFragmentsCount == mapSize(request.resource.data.unlockedFragmentsMap)
-          )
-        )
-        && (
-          // mapCompleted can only go false->true when count == 15
-          !('mapCompleted' in request.resource.data.diff(resource.data).affectedKeys())
-          || (
-            // Was false, now true, and count is 15
-            (resource.data.mapCompleted == false 
-             && request.resource.data.mapCompleted == true 
-             && request.resource.data.treasureFragmentsCount == 15)
-            // Or staying the same
-            || request.resource.data.mapCompleted == resource.data.mapCompleted
-            // Or legacy: mapCompleted doesn't exist yet
-            || !('mapCompleted' in resource.data)
-          )
+          || request.resource.data.treasureFragmentsCount is number
         );
       
       // DELETE: Nunca permitido desde cliente

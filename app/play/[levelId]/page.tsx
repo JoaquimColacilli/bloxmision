@@ -378,9 +378,15 @@ export default function PlayPage() {
     setJorcMessage("")
   }, [])
 
+  const [isSaving, setIsSaving] = useState(false)
+
   const handleNextLevel = useCallback(async () => {
+    // Prevent double submission
+    if (isSaving) return
+
     // Save progress to Firestore before navigating
     if (user && executionResult?.success) {
+      setIsSaving(true)
       try {
         // Convert LevelData to Level format for the validator
         const level = levelDataToLevel(levelConfig)
@@ -410,6 +416,7 @@ export default function PlayPage() {
             })
             setShowSuccessModal(false)
             setShowFragmentModal(true)
+            setIsSaving(false)
             return // Don't navigate yet - wait for fragment modal to close
           }
 
@@ -427,23 +434,32 @@ export default function PlayPage() {
             setJorcExpression("celebrating")
             setJorcMessage(`¡Ganaste ${progressResult.xpEarned} XP y ${newBadges.length} insignia(s) nueva(s)!`)
           }
+
+          // Navigate ONLY if save was successful
+          setShowSuccessModal(false)
+          // Navigate to next level - preserve the world prefix
+          const [worldPrefix, levelNum] = levelId.split("-")
+          const nextLevelNum = Number.parseInt(levelNum || "1") + 1
+          router.push(`/play/${worldPrefix}-${nextLevelNum}`)
         } else {
           console.error('Progress submission failed:', progressResult.message)
+          // Show error to user and stay on current level
+          alert(`Error al guardar avance: ${progressResult.message}\n\nIntenta de nuevo.`)
         }
       } catch (error: any) {
         console.error('Error saving progress:', error)
-        console.error('Error code:', error?.code)
-        console.error('Error message:', error?.message)
-        // Still navigate even if save fails
+        alert(`Error inesperado al guardar: ${error?.message || 'Error desconocido'}`)
+      } finally {
+        setIsSaving(false)
       }
+    } else {
+      // If no user (guest?) or odd state, just close modal (or navigate if intended for guests)
+      setShowSuccessModal(false)
+      const [worldPrefix, levelNum] = levelId.split("-")
+      const nextLevelNum = Number.parseInt(levelNum || "1") + 1
+      router.push(`/play/${worldPrefix}-${nextLevelNum}`)
     }
-
-    setShowSuccessModal(false)
-    // Navigate to next level - preserve the world prefix
-    const [worldPrefix, levelNum] = levelId.split("-")
-    const nextLevelNum = Number.parseInt(levelNum || "1") + 1
-    router.push(`/play/${worldPrefix}-${nextLevelNum}`)
-  }, [router, levelId, user, executionResult, levelConfig, codeBlocks, attemptsCount, viewedHintIndex, refreshUser])
+  }, [router, levelId, user, executionResult, levelConfig, codeBlocks, attemptsCount, viewedHintIndex, refreshUser, isSaving])
 
   // Handle fragment modal close - navigate to next level
   const handleFragmentModalClose = useCallback(() => {

@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export interface WorldDefinition {
@@ -77,41 +77,32 @@ export interface WorldProgress {
  * Get user's progress for all worlds
  */
 export async function getUserWorldsProgress(userId: string): Promise<WorldProgress[]> {
-    // Get all progress records for this user
-    const q = query(
-        collection(db, 'progress'),
-        where('userId', '==', userId)
-    );
+    // Get all progress records for this user from subcollection
+    const progressRef = collection(db, `users/${userId}/progress`);
+    const snapshot = await getDocs(progressRef);
 
-    const snapshot = await getDocs(q);
-
-    // Helper to normalize worldId to semantic format (e.g., "1" -> "secuencia")
-    const normalizeWorldId = (wId: string): string => {
-        const numericToSemantic: Record<string, string> = {
-            "1": "secuencia",
-            "2": "bucle",
-            "3": "decision",
-            "4": "memoria",
-            "5": "funcion",
-        };
-        return numericToSemantic[wId] || wId;
+    // Helper to convert numeric world ID to semantic (e.g., "1" -> "secuencia")
+    const numericToSemantic: Record<string, string> = {
+        "1": "secuencia",
+        "2": "bucle",
+        "3": "decision",
+        "4": "memoria",
+        "5": "funcion",
     };
 
-    // Count completed levels per world (normalize worldId)
+    // Count completed levels per world using doc.id as levelId
     const completedByWorld: Record<string, Set<string>> = {};
 
     snapshot.forEach(doc => {
-        const data = doc.data();
-        const rawWorldId = data.worldId;
-        const levelId = data.levelId;
+        // doc.id is the levelId (e.g. "1-6")
+        const levelId = doc.id;
+        const [worldNumStr] = levelId.split('-');
+        const worldId = numericToSemantic[worldNumStr] || worldNumStr;
 
-        if (rawWorldId && levelId) {
-            const worldId = normalizeWorldId(rawWorldId);
-            if (!completedByWorld[worldId]) {
-                completedByWorld[worldId] = new Set();
-            }
-            completedByWorld[worldId].add(levelId);
+        if (!completedByWorld[worldId]) {
+            completedByWorld[worldId] = new Set();
         }
+        completedByWorld[worldId].add(levelId);
     });
 
     // Build world progress list
@@ -178,31 +169,14 @@ export async function getUserLevelsForWorld(userId: string, worldId: string): Pr
     const worldDef = WORLD_DEFINITIONS.find(w => w.id === worldId);
     if (!worldDef) return [];
 
-    // Get user progress for this world - query by semantic worldId (e.g., "secuencia")
-    const q1 = query(
-        collection(db, 'progress'),
-        where('userId', '==', userId),
-        where('worldId', '==', worldId)
-    );
-
-    // Also query by numeric worldId (e.g., "1") for legacy data
-    const q2 = query(
-        collection(db, 'progress'),
-        where('userId', '==', userId),
-        where('worldId', '==', worldDef.numericId)
-    );
-
-    const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+    // Get ALL user progress from subcollection (no worldId filter - use doc.id)
+    const progressRef = collection(db, `users/${userId}/progress`);
+    const snapshot = await getDocs(progressRef);
     const progressMap = new Map();
 
-    // Merge results from both queries
-    snapshot1.forEach(doc => {
-        const data = doc.data();
-        progressMap.set(data.levelId, data);
-    });
-    snapshot2.forEach(doc => {
-        const data = doc.data();
-        progressMap.set(data.levelId, data);
+    // Map by doc.id which is the levelId (e.g. "1-1", "1-6")
+    snapshot.forEach(doc => {
+        progressMap.set(doc.id, doc.data());
     });
 
     // Generate level list combining static definition with progress
@@ -257,35 +231,35 @@ export async function getWorldProgress(userId: string, worldId: string): Promise
  * @returns The maximum accessible level number (1-based)
  */
 export async function getMaxUnlockedLevelNum(userId: string, worldNumericId: string): Promise<number> {
-    // Get all progress for this user in this world
-    const q = query(
-        collection(db, 'progress'),
-        where('userId', '==', userId)
-    );
+    try {
+        // Leer de la subcolección del usuario
+        const progressRef = collection(db, `users/${userId}/progress`);
+        const snapshot = await getDocs(progressRef);
 
-    const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+            return 1;
+        }
 
-    // Find the highest completed level number in this world
-    let maxCompletedLevel = 0;
+        let maxCompletedLevel = 0;
 
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const levelId = data.levelId as string;
-
-        if (levelId) {
-            // Parse level ID format: "worldNum-levelNum" (e.g., "1-5")
+        snapshot.forEach(doc => {
+            // doc.id es el levelId (ej: "1-6")
+            const levelId = doc.id;
             const [worldNum, levelNumStr] = levelId.split('-');
 
+            // Solo contar niveles de este mundo
             if (worldNum === worldNumericId) {
                 const levelNum = parseInt(levelNumStr, 10);
                 if (!isNaN(levelNum) && levelNum > maxCompletedLevel) {
                     maxCompletedLevel = levelNum;
                 }
             }
-        }
-    });
+        });
 
-    // User can access the next level after their highest completed
-    // Always at least level 1 is unlocked
-    return maxCompletedLevel + 1;
+        return maxCompletedLevel + 1;
+
+    } catch (error) {
+        console.error('Error getting max unlocked level:', error);
+        return 1;
+    }
 }
