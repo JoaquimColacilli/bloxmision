@@ -19,6 +19,7 @@ import { useBlockEngine } from "@/hooks/use-block-engine"
 import { useAuth } from "@/contexts/auth-context"
 import { submitLevelProgress } from "@/src/lib/services/progressService"
 import { checkAndAwardBadges } from "@/src/lib/services/badgeService"
+import { levelDataToLevel, blockInstancesToBlocks } from "@/lib/level-adapter"
 import type { JorcExpression } from "@/components/jorc/jorc-sprite"
 import type { DialogueMood } from "@/components/jorc/jorc-dialogue"
 import { getMockLevelData, getLevelConfig } from "@/lib/mock-level-data"
@@ -44,7 +45,7 @@ const TUTORIAL_STORAGE_KEY = "bloxmision_tutorial_completed"
 export default function PlayPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const levelId = params.levelId as string
 
   const levelConfig = useMemo(() => getLevelConfig(levelId), [levelId])
@@ -331,16 +332,24 @@ export default function PlayPage() {
     // Save progress to Firestore before navigating
     if (user && executionResult?.success) {
       try {
+        // Convert LevelData to Level format for the validator
+        const level = levelDataToLevel(levelConfig)
+        // Convert BlockInstance[] to Block[] for the validator
+        const blocks = blockInstancesToBlocks(codeBlocks)
+
         const progressResult = await submitLevelProgress(
           user.id,
           levelId,
-          levelConfig as any, // Type cast for compatibility
-          codeBlocks as any,
+          level,
+          blocks,
           attemptsCount,
           viewedHintIndex
         )
 
         if (progressResult.success) {
+          // Refresh user data to update XP bar
+          await refreshUser()
+
           // Check for new badges
           const newBadges = await checkAndAwardBadges(user.id, {
             userId: user.id,
@@ -365,7 +374,7 @@ export default function PlayPage() {
     // Navigate to next level
     const currentNum = Number.parseInt(levelId.split("-")[1] || "1")
     router.push(`/play/1-${currentNum + 1}`)
-  }, [router, levelId, user, executionResult, levelConfig, codeBlocks, attemptsCount, viewedHintIndex])
+  }, [router, levelId, user, executionResult, levelConfig, codeBlocks, attemptsCount, viewedHintIndex, refreshUser])
 
   const handleRetryFromModal = useCallback(() => {
     setShowSuccessModal(false)
@@ -430,7 +439,7 @@ export default function PlayPage() {
         blocksCount={codeBlocks.length}
         rightPanel={
           <div className="flex h-full flex-col">
-            <div className="flex-1 overflow-hidden">{CodeAreaComponent}</div>
+            <div className="flex-1 overflow-auto">{CodeAreaComponent}</div>
             <div className="border-t border-ocean-200 p-4">{JorcPanelComponent}</div>
           </div>
         }

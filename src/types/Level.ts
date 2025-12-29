@@ -1,6 +1,6 @@
 export interface Level {
     id: string;
-    worldId: number;
+    worldId: string | number;
     levelNumber: number;
     title: string;
     description: string;

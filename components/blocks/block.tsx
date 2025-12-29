@@ -67,12 +67,12 @@ const iconMap: Record<string, React.ElementType> = {
 
 // Color presets by category
 const categoryColors: Record<string, { bg: string; border: string; text: string }> = {
-  movement: { bg: "bg-blue-500", border: "border-blue-600", text: "text-blue-50" },
-  actions: { bg: "bg-violet-500", border: "border-violet-600", text: "text-violet-50" },
-  control: { bg: "bg-orange-500", border: "border-orange-600", text: "text-orange-50" },
-  sensors: { bg: "bg-yellow-500", border: "border-yellow-700", text: "text-yellow-950" },
-  memory: { bg: "bg-green-500", border: "border-green-600", text: "text-green-50" },
-  commands: { bg: "bg-red-500", border: "border-red-600", text: "text-red-50" },
+  movement: { bg: "bg-blue-500", border: "border-blue-600", text: "text-black" },
+  actions: { bg: "bg-violet-500", border: "border-violet-600", text: "text-black" },
+  control: { bg: "bg-orange-500", border: "border-orange-600", text: "text-black" },
+  sensors: { bg: "bg-yellow-500", border: "border-yellow-700", text: "text-black" },
+  memory: { bg: "bg-green-500", border: "border-green-600", text: "text-black" },
+  commands: { bg: "bg-red-500", border: "border-red-600", text: "text-black" },
 }
 
 // Helper to check if it's a BlockInstance
@@ -233,8 +233,8 @@ export const Block = memo(function Block({
     textColor,
     disabled && "cursor-not-allowed opacity-50",
     !disabled &&
-      variant === "palette" &&
-      "cursor-grab hover:scale-[1.02] hover:shadow-lg active:cursor-grabbing active:scale-[0.98]",
+    variant === "palette" &&
+    "cursor-grab hover:scale-[1.02] hover:shadow-lg active:cursor-grabbing active:scale-[0.98]",
     !disabled && variant === "code" && "cursor-default",
     variant === "running" && "animate-pulse ring-2 ring-white ring-offset-2",
     isDragging && "opacity-60",

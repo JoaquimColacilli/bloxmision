@@ -64,7 +64,7 @@ function GameCellComponent({ x, y, tileType, entity, isPath, pathDirection, onCl
         "relative flex items-center justify-center border border-black/10 transition-all",
         tileStyles[tileType],
         onClick &&
-          "cursor-pointer hover:brightness-110 focus:ring-2 focus:ring-gold-400 focus:ring-offset-1 focus:outline-none",
+        "cursor-pointer hover:brightness-110 focus:ring-2 focus:ring-gold-400 focus:ring-offset-1 focus:outline-none",
         isPath && "ring-2 ring-inset ring-gold-400/60",
       )}
       style={{ width: cellSize, height: cellSize }}
@@ -108,8 +108,8 @@ function GameCellComponent({ x, y, tileType, entity, isPath, pathDirection, onCl
           <div className="relative size-full">
             {/* Body */}
             <div className="absolute inset-[15%] rounded-full bg-ocean-500" />
-            <div className="absolute bottom-[20%] left-1/2 size-[20%] -translate-x-1/2 rounded-full bg-white">
-              <div className="absolute top-[20%] left-1/2 size-[50%] -translate-x-1/2 rounded-full bg-ocean-900" />
+            <div className="absolute right-[15%] top-1/2 size-[20%] -translate-y-1/2 rounded-full bg-white">
+              <div className="absolute right-[20%] top-1/2 size-[50%] -translate-y-1/2 rounded-full bg-ocean-900" />
             </div>
           </div>
         </div>

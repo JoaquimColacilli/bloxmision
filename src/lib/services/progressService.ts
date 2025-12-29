@@ -63,17 +63,22 @@ export async function submitLevelProgress(
             isOptimal: result.isOptimal
         });
 
-        // 4. Guardar progreso
+        // 4. Guardar progreso (campos requeridos por firestore.rules)
+        const stars = result.isOptimal ? 3 : (usedHints === 0 ? 2 : 1);
+
         await addDoc(collection(db, 'progress'), {
             userId,
             levelId,
+            worldId: level.worldId?.toString() || "1",
             completed: true,
             attempts,
             usedHints,
-            codeUsed: blocks,
-            isOptimal: result.isOptimal,
+            blockCount: blocks.length,
+            isOptimal: result.isOptimal || false,
+            stars,
+            xpEarned: xp,
             completedAt: serverTimestamp(),
-            xpEarned: xp
+            isFirstCompletion: true
         });
 
         // 5. Actualizar user doc (XP y nivel)
