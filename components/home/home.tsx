@@ -63,15 +63,12 @@ export function Home({ user, loading, error, onRetry }: HomeProps) {
       {/* Hero Section */}
       <section className="flex flex-col items-center gap-4 text-center" aria-labelledby="hero-title">
         {/* Jorc Illustration */}
-        <div className="relative">
-          <div className="absolute -inset-4 animate-pulse rounded-full bg-ocean-200 opacity-50" />
-          <div className="relative flex size-32 items-center justify-center rounded-full border-4 border-ocean-300 bg-ocean-500 shadow-lg md:size-40">
-            <img
-              src="/placeholder.svg?height=120&width=120"
-              alt="Jorc el Pirata, tu guia de aventuras"
-              className="size-24 md:size-32"
-            />
-          </div>
+        <div className="flex items-center justify-center">
+          <img
+            src="/jorc-pointing.png"
+            alt="Jorc el Pirata señalando una isla"
+            className="h-40 w-auto md:h-48"
+          />
         </div>
 
         {/* Welcome Message */}
