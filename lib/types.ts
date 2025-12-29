@@ -5,7 +5,7 @@ export interface User {
   avatar?: string
   totalXP: number
   currentXP: number
-  xpToNextLevel: number
+  nextLevelThreshold: number
   playerLevel: string
   currentWorld?: number
   currentLevel?: number
@@ -15,6 +15,10 @@ export interface User {
   }
   badges?: string[]
   treasureFragments?: number
+  // Treasure Fragment System
+  unlockedFragmentsMap?: Record<string, true>
+  treasureFragmentsCount?: number
+  mapCompleted?: boolean
 }
 
 export interface World {
@@ -165,6 +169,13 @@ export interface LevelObjective {
   id?: string
 }
 
+export interface TreasureFragmentConfig {
+  fragmentId: string           // "fragment-{world}-{n}" e.g. "fragment-1-1"
+  worldId: number              // 1-5
+  fragmentNumber: number       // 1-3 within the world
+  description: string          // "Fragmento 1 del Mundo 1"
+}
+
 export interface LevelData {
   id: string
   title: string
@@ -179,6 +190,7 @@ export interface LevelData {
   }
   hints?: string[]
   xpReward?: number
+  treasureFragment?: TreasureFragmentConfig
 }
 
 export interface ExecutionResult {

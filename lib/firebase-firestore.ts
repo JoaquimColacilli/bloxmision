@@ -6,6 +6,7 @@ import {
     serverTimestamp,
 } from "firebase/firestore"
 import { db } from "./firebase"
+import { getPlayerLevel, getXPToNextLevel, getCurrentLevelXP, getNextLevelThreshold } from "@/lib/game/xpCalculator"
 import type { User } from "./types"
 
 /**
@@ -17,7 +18,7 @@ export interface UserProfile {
     email: string
     totalXP: number
     currentXP: number
-    xpToNextLevel: number
+    nextLevelThreshold: number
     playerLevel: string
     currentWorld: number
     currentLevel: number
@@ -28,12 +29,16 @@ export interface UserProfile {
         frozenDays: number
     }
     badges: string[]
-    treasureFragments: number
+    treasureFragments: number  // Deprecated, kept for backwards compatibility
     settings: {
         soundEnabled: boolean
         musicEnabled: boolean
         hintsEnabled: boolean
     }
+    // Treasure Fragment System (new)
+    unlockedFragmentsMap: Record<string, true>  // { "fragment-1-1": true, ... }
+    treasureFragmentsCount: number               // Must equal Object.keys(unlockedFragmentsMap).length
+    mapCompleted: boolean                        // True when treasureFragmentsCount === 15
     createdAt: Date
     updatedAt: Date
 }
@@ -70,7 +75,7 @@ export async function createUserProfile(
         email,
         totalXP: 0,  // Must be 0 for new users (rule validation)
         currentXP: 0,
-        xpToNextLevel: 100,
+        nextLevelThreshold: 100,
         playerLevel: "Grumete",  // Must be "Grumete" for new users
         currentWorld: 1,  // Must be 1 for new users
         currentLevel: 1,  // Must be 1 for new users
@@ -81,12 +86,16 @@ export async function createUserProfile(
             frozenDays: 1,
         },
         badges: [],
-        treasureFragments: 0,
+        treasureFragments: 0,  // Deprecated
         settings: {
             soundEnabled: true,
             musicEnabled: true,
             hintsEnabled: true,
         },
+        // Treasure Fragment System - initialized empty
+        unlockedFragmentsMap: {},
+        treasureFragmentsCount: 0,
+        mapCompleted: false,
         createdAt: now,
         updatedAt: now,
     }
@@ -101,23 +110,23 @@ export async function createUserProfile(
     return profile
 }
 
-import { calculateXPBreakdown } from "@/src/lib/services/xpCalculator"
+
 
 /**
  * Convert Firestore UserProfile to app's User type
  */
 export function toAppUser(uid: string, profile: UserProfile): User {
-    // Calculate derived XP stats to ensure consistency
-    const xpStats = calculateXPBreakdown(profile.totalXP || 0)
+    // Calculate derived XP stats to ensure consistency using the totalXP
+    const totalXP = profile.totalXP || 0
 
     return {
         id: uid,
         displayName: profile.displayName,
         email: profile.email,
         totalXP: profile.totalXP,
-        currentXP: xpStats.currentXPInLevel,  // Use calculated value
-        xpToNextLevel: xpStats.xpToNextLevel, // Use calculated value
-        playerLevel: xpStats.level,          // Use calculated value
+        currentXP: getCurrentLevelXP(totalXP),    // Use calculated value
+        nextLevelThreshold: getNextLevelThreshold(totalXP), // Threshold for next player level
+        playerLevel: getPlayerLevel(totalXP),     // Use calculated value
         currentWorld: profile.currentWorld,
         currentLevel: profile.currentLevel,
         streak: {
@@ -125,7 +134,11 @@ export function toAppUser(uid: string, profile: UserProfile): User {
             longest: profile.streak?.longest ?? 0,
         },
         badges: profile.badges,
-        treasureFragments: profile.treasureFragments,
+        treasureFragments: profile.treasureFragmentsCount ?? profile.treasureFragments ?? 0,
+        // Treasure Fragment System
+        unlockedFragmentsMap: profile.unlockedFragmentsMap ?? {},
+        treasureFragmentsCount: profile.treasureFragmentsCount ?? 0,
+        mapCompleted: profile.mapCompleted ?? false,
     }
 }
 

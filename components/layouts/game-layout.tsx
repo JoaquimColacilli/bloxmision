@@ -44,8 +44,8 @@ export function GameLayout({
 
         {user && (
           <XPBar
-            currentXP={user.currentXP}
-            xpToNextLevel={user.xpToNextLevel}
+            totalXP={user.totalXP}
+            nextLevelThreshold={user.nextLevelThreshold}
             playerLevel={user.playerLevel}
             variant="compact"
           />

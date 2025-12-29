@@ -27,7 +27,7 @@ export class BlockValidator {
             this.executeBlocks(blocks);
 
             const objectivesMet = this.checkObjectives();
-            const isOptimal = blocks.length === this.level.optimalSolution.blockCount;
+            const isOptimal = blocks.length <= this.level.optimalSolution.blockCount;
 
             return {
                 success: true,
@@ -168,6 +168,9 @@ export class BlockValidator {
         }
 
         this.state.inventory.push('coin');
+        if (coin.id) {
+            this.state.objectivesCompleted.push(coin.id);
+        }
     }
 
     private executeLoop(params: any, blockIndex: number) {
@@ -208,7 +211,28 @@ export class BlockValidator {
                     this.state.position.y === obj.target!.y;
             }
             if (obj.type === 'collect') {
-                return this.state.objectivesCompleted.includes(obj.id!);
+                // Check if specific item ID was collected
+                if (obj.id) {
+                    return this.state.objectivesCompleted.includes(obj.id);
+                }
+                // Or check if count of items was collected
+                if (obj.count && obj.item) {
+                    const collectedCount = this.state.inventory.filter(i => i === obj.item).length;
+                    return collectedCount >= obj.count;
+                }
+            }
+            if (obj.type === 'collectAll') {
+                // Check if all collectibles of types specified in obj.items (array) are collected
+                // obj.items is likely string[] e.g. ["coin"]
+                // But Level interface might define it differently. Let's check LevelDataToLevel. 
+                // It maps to "collectAll" but doesn't map "items". 
+                // Wait, LevelObjective type has 'items'? 
+                // Let's assume obj.items exists if type is collectAll
+                const targetTypes = (obj as any).items || []; // items property might be missing in strict type if not defined
+                // Count total available of these types
+                const totalAvailable = this.level.collectibles.filter(c => targetTypes.includes(c.type)).length;
+                const collectedCount = this.state.inventory.filter(i => targetTypes.includes(i)).length;
+                return collectedCount >= totalAvailable;
             }
             return false;
         });

@@ -1,3 +1,10 @@
+export interface TreasureFragmentConfig {
+    fragmentId: string;           // "fragment-{world}-{n}" e.g. "fragment-1-1"
+    worldId: number;              // 1-5
+    fragmentNumber: number;       // 1-3 within the world
+    description: string;          // "Fragmento 1 del Mundo 1"
+}
+
 export interface Level {
     id: string;
     worldId: string | number;
@@ -22,6 +29,7 @@ export interface Level {
     hints: string[];
     xpReward: number;
     concept: 'sequences' | 'loops' | 'conditionals' | 'variables' | 'functions';
+    treasureFragment?: TreasureFragmentConfig;
 }
 
 export interface Objective {

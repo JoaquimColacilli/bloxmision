@@ -155,10 +155,10 @@ export function getBlocksForLevel(levelId: string): BlockCategoryData[] {
     ]
   }
 
-  // 1-5: Forward + turn-right + collect-coin
+  // 1-5: Forward + turn-right + turn-left + collect-coin
   if (levelId === "1-5") {
     return [
-      { ...movement, blocks: movement.blocks.filter((b) => ["forward", "turn-right"].includes(b.id)) },
+      { ...movement, blocks: movement.blocks.filter((b) => ["forward", "turn-right", "turn-left"].includes(b.id)) },
       { ...actions, blocks: actions.blocks.filter((b) => b.id === "collect-coin") },
     ]
   }

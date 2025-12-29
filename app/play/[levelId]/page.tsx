@@ -17,8 +17,11 @@ import { NewBlockIntroModal, useNewBlocksForLevel } from "@/components/help/new-
 import { ProtectedRoute } from "@/components/auth/auth-guard"
 import { useBlockEngine } from "@/hooks/use-block-engine"
 import { useAuth } from "@/contexts/auth-context"
-import { submitLevelProgress } from "@/src/lib/services/progressService"
+import { submitLevelProgress, recalculateUserXP } from "@/src/lib/services/progressService"
+import { getMaxUnlockedLevelNum } from "@/src/lib/services/worldService"
 import { checkAndAwardBadges } from "@/src/lib/services/badgeService"
+import { LevelLockedModal } from "@/components/game/level-locked-modal"
+import { FragmentUnlockedModal } from "@/components/game/fragment-unlocked-modal"
 import { levelDataToLevel, blockInstancesToBlocks } from "@/lib/level-adapter"
 import type { JorcExpression } from "@/components/jorc/jorc-sprite"
 import type { DialogueMood } from "@/components/jorc/jorc-dialogue"
@@ -55,6 +58,44 @@ export default function PlayPage() {
   const availableBlockIds = useMemo(() => availableBlocks.map((b) => b.id), [availableBlocks])
   const newBlockIds = useNewBlocksForLevel(availableBlockIds)
   const [showNewBlockIntro, setShowNewBlockIntro] = useState(false)
+
+  // Level locking state
+  const [isLevelLocked, setIsLevelLocked] = useState(false)
+  const [maxUnlockedLevel, setMaxUnlockedLevel] = useState(1)
+  const [accessCheckDone, setAccessCheckDone] = useState(false)
+
+  // Parse world and level numbers from levelId (e.g., "1-5" -> world "1", level 5)
+  const [worldNumericId, requestedLevelNum] = useMemo(() => {
+    const parts = levelId.split('-')
+    return [parts[0] || '1', parseInt(parts[1] || '1', 10)]
+  }, [levelId])
+
+  // XP Sync and Level Access Check on mount
+  useEffect(() => {
+    if (!user) return
+
+    const syncAndCheckAccess = async () => {
+      try {
+        // 1. Recalculate XP from progress records (one-time sync for buggy saves)
+        await recalculateUserXP(user.id)
+        await refreshUser()
+
+        // 2. Check if user can access this level
+        const maxLevel = await getMaxUnlockedLevelNum(user.id, worldNumericId)
+        setMaxUnlockedLevel(maxLevel)
+
+        if (requestedLevelNum > maxLevel) {
+          setIsLevelLocked(true)
+        }
+      } catch (error) {
+        console.error('Error during sync/access check:', error)
+      } finally {
+        setAccessCheckDone(true)
+      }
+    }
+
+    syncAndCheckAccess()
+  }, [user, worldNumericId, requestedLevelNum, refreshUser])
 
   useEffect(() => {
     if (newBlockIds.length > 0) {
@@ -104,6 +145,15 @@ export default function PlayPage() {
   const [jorcMessage, setJorcMessage] = useState<string>(JORC_MESSAGES.intro)
 
   const [showTutorial, setShowTutorial] = useState(false)
+
+  // Fragment modal state
+  const [showFragmentModal, setShowFragmentModal] = useState(false)
+  const [unlockedFragment, setUnlockedFragment] = useState<{
+    fragmentId: string
+    description?: string
+    totalCount: number
+    isMapComplete: boolean
+  } | null>(null)
 
   // Show tutorial on first level if not completed
   useEffect(() => {
@@ -350,6 +400,19 @@ export default function PlayPage() {
           // Refresh user data to update XP bar
           await refreshUser()
 
+          // Check if a fragment was unlocked
+          if (progressResult.fragmentUnlocked) {
+            setUnlockedFragment({
+              fragmentId: progressResult.fragmentUnlocked,
+              description: levelConfig.treasureFragment?.description,
+              totalCount: progressResult.totalFragments || 1,
+              isMapComplete: progressResult.mapCompleted || false
+            })
+            setShowSuccessModal(false)
+            setShowFragmentModal(true)
+            return // Don't navigate yet - wait for fragment modal to close
+          }
+
           // Check for new badges
           const newBadges = await checkAndAwardBadges(user.id, {
             userId: user.id,
@@ -364,17 +427,38 @@ export default function PlayPage() {
             setJorcExpression("celebrating")
             setJorcMessage(`¡Ganaste ${progressResult.xpEarned} XP y ${newBadges.length} insignia(s) nueva(s)!`)
           }
+        } else {
+          console.error('Progress submission failed:', progressResult.message)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error saving progress:', error)
+        console.error('Error code:', error?.code)
+        console.error('Error message:', error?.message)
+        // Still navigate even if save fails
       }
     }
 
     setShowSuccessModal(false)
-    // Navigate to next level
-    const currentNum = Number.parseInt(levelId.split("-")[1] || "1")
-    router.push(`/play/1-${currentNum + 1}`)
+    // Navigate to next level - preserve the world prefix
+    const [worldPrefix, levelNum] = levelId.split("-")
+    const nextLevelNum = Number.parseInt(levelNum || "1") + 1
+    router.push(`/play/${worldPrefix}-${nextLevelNum}`)
   }, [router, levelId, user, executionResult, levelConfig, codeBlocks, attemptsCount, viewedHintIndex, refreshUser])
+
+  // Handle fragment modal close - navigate to next level
+  const handleFragmentModalClose = useCallback(() => {
+    setShowFragmentModal(false)
+    setUnlockedFragment(null)
+    // Navigate to next level
+    const [worldPrefix, levelNum] = levelId.split("-")
+    const nextLevelNum = Number.parseInt(levelNum || "1") + 1
+    if (unlockedFragment?.isMapComplete) {
+      // If map is complete, go to treasure map page
+      router.push('/treasure-map')
+    } else {
+      router.push(`/play/${worldPrefix}-${nextLevelNum}`)
+    }
+  }, [router, levelId, unlockedFragment])
 
   const handleRetryFromModal = useCallback(() => {
     setShowSuccessModal(false)
@@ -496,6 +580,23 @@ export default function PlayPage() {
 
       {showNewBlockIntro && newBlockIds.length > 0 && (
         <NewBlockIntroModal blockIds={newBlockIds} levelId={levelId} onClose={handleCloseNewBlockIntro} />
+      )}
+
+      <LevelLockedModal
+        isOpen={isLevelLocked}
+        worldNumericId={worldNumericId}
+        maxUnlockedLevel={maxUnlockedLevel}
+      />
+
+      {unlockedFragment && (
+        <FragmentUnlockedModal
+          isOpen={showFragmentModal}
+          onClose={handleFragmentModalClose}
+          fragmentId={unlockedFragment.fragmentId}
+          fragmentDescription={unlockedFragment.description}
+          currentCount={unlockedFragment.totalCount}
+          isMapComplete={unlockedFragment.isMapComplete}
+        />
       )}
     </ProtectedRoute>
   )

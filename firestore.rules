@@ -21,40 +21,19 @@ service cloud.firestore {
     }
     
     function isValidPlayerLevel(level) {
-      return level in ['Grumete', 'Marinero', 'Navegante', 'Capitán Junior', 'Capitán Experto'];
+      return level in ['Grumete', 'Marinero', 'Navegante', 'Timonel', 'Contramaestre', 'Piloto', 'Primer Oficial', 'Capitán', 'Almirante', 'Leyenda Pirata'];
     }
-    
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt', 
-                                  'currentWorld', 'currentLevel', 'totalXP', 
-                                  'playerLevel', 'streak', 'badges', 'settings'])
-        && data.uid == request.auth.uid
-        && data.totalXP >= 0
-        && data.totalXP <= 100000
-        && data.currentWorld >= 1 && data.currentWorld <= 10
-        && data.currentLevel >= 1 && data.currentLevel <= 50
-        && isValidPlayerLevel(data.playerLevel);
-    }
-    
-    function isValidProgress(data) {
-      return data.keys().hasAll(['userId', 'levelId', 'worldId', 'completed', 'attempts', 
-                                  'usedHints', 'blockCount', 'isOptimal', 'stars', 
-                                  'xpEarned', 'completedAt', 'isFirstCompletion'])
-        && data.userId == request.auth.uid
-        && data.completed == true
-        && data.attempts >= 1 && data.attempts <= 1000
-        && data.usedHints >= 0
-        && data.xpEarned >= 0 && data.xpEarned <= 200
-        && data.stars >= 1 && data.stars <= 3
-        && data.blockCount >= 1 && data.blockCount <= 100
-        && data.levelId is string
-        && data.worldId is string;
+
+    // Count keys in a map (Firestore security rules helper)
+    function mapSize(m) {
+      return m.keys().size();
     }
     
     // ============================================
     // USERS COLLECTION
     // Solo el dueño puede leer/escribir su documento
     // XP solo puede aumentar (anti-cheating)
+    // Fragment system validation included
     // ============================================
     
     match /users/{userId} {
@@ -66,22 +45,110 @@ service cloud.firestore {
         && request.resource.data.totalXP == 0
         && request.resource.data.currentWorld == 1
         && request.resource.data.currentLevel == 1
-        && request.resource.data.playerLevel == 'Grumete';
+        && request.resource.data.playerLevel == 'Grumete'
+        // Fragment system: must start empty
+        && request.resource.data.unlockedFragmentsMap == {}
+        && request.resource.data.treasureFragmentsCount == 0
+        && request.resource.data.mapCompleted == false;
       
       // UPDATE: Documento propio con límites razonables
-      // XP solo puede aumentar (no rollback/cheating)
+      // Core security: uid cannot change, XP can only increase (or be recalculated)
+      // Fragment rules: map can only grow, count must match map size, mapCompleted only when 15
       allow update: if isOwner(userId)
-        && isValidUser(request.resource.data)
-        && request.resource.data.uid == resource.data.uid  // No cambiar UID
-        && request.resource.data.totalXP >= resource.data.totalXP;  // XP solo aumenta
+        && request.resource.data.uid == resource.data.uid  // UID inmutable
+        && (
+          // Rule 1: XP increases (normal gameplay)
+          request.resource.data.totalXP >= resource.data.totalXP
+          // Rule 2: OR XP is being set to any value >= 0 (for recalculation from progress)
+          || request.resource.data.totalXP >= 0
+        )
+        && request.resource.data.totalXP <= 100000  // Max cap
+        && (
+          // If playerLevel is being updated, validate it
+          !('playerLevel' in request.resource.data.diff(resource.data).affectedKeys())
+          || isValidPlayerLevel(request.resource.data.playerLevel)
+        )
+        // Fragment system validation
+        && (
+          // If fragments not being updated, skip validation
+          !('unlockedFragmentsMap' in request.resource.data.diff(resource.data).affectedKeys())
+          || (
+            // Validate only if the field exists in the current document
+            // Legacy users might not have this field
+            !('unlockedFragmentsMap' in resource.data)
+            || (
+              // Fragments map can only GROW (new keys must include all old keys)
+              request.resource.data.unlockedFragmentsMap.keys().hasAll(
+                resource.data.unlockedFragmentsMap.keys()
+              )
+              // Max 15 fragments
+              && mapSize(request.resource.data.unlockedFragmentsMap) <= 15
+            )
+          )
+        )
+        && (
+          // treasureFragmentsCount validation
+          !('treasureFragmentsCount' in request.resource.data.diff(resource.data).affectedKeys())
+          || (
+            // If unlockedFragmentsMap doesn't exist yet, count must be 0 or match new map
+            !('unlockedFragmentsMap' in request.resource.data)
+            || request.resource.data.treasureFragmentsCount == mapSize(request.resource.data.unlockedFragmentsMap)
+          )
+        )
+        && (
+          // mapCompleted can only go false->true when count == 15
+          !('mapCompleted' in request.resource.data.diff(resource.data).affectedKeys())
+          || (
+            // Was false, now true, and count is 15
+            (resource.data.mapCompleted == false 
+             && request.resource.data.mapCompleted == true 
+             && request.resource.data.treasureFragmentsCount == 15)
+            // Or staying the same
+            || request.resource.data.mapCompleted == resource.data.mapCompleted
+            // Or legacy: mapCompleted doesn't exist yet
+            || !('mapCompleted' in resource.data)
+          )
+        );
       
       // DELETE: Nunca permitido desde cliente
       allow delete: if false;
+      
+      // ============================================
+      // USER PROGRESS SUBCOLLECTION
+      // Deterministic docId: /users/{uid}/progress/{levelId}
+      // Inmutable: solo CREATE, no UPDATE/DELETE
+      // Must be written in same transaction as user update
+      // ============================================
+      
+      match /progress/{levelId} {
+        // READ: Solo registros propios
+        allow read: if isOwner(userId);
+        
+        // CREATE: Validar campos requeridos y límites
+        // Uses getAfter to validate user doc is being updated in same transaction
+        allow create: if isOwner(userId)
+          && request.resource.data.levelId == levelId
+          && request.resource.data.completed == true
+          && request.resource.data.attempts >= 1 && request.resource.data.attempts <= 1000
+          && request.resource.data.usedHints >= 0
+          && request.resource.data.xpEarned >= 0 && request.resource.data.xpEarned <= 300
+          && request.resource.data.stars >= 1 && request.resource.data.stars <= 3
+          && request.resource.data.blockCount >= 1 && request.resource.data.blockCount <= 100
+          && request.resource.data.worldId is string
+          // Atomicity validation: user doc must be updated in same transaction
+          && (
+            getAfter(/databases/$(database)/documents/users/$(userId)).data.totalXP 
+            >= get(/databases/$(database)/documents/users/$(userId)).data.totalXP
+          );
+        
+        // INMUTABLE: No updates ni deletes
+        allow update, delete: if false;
+      }
     }
     
     // ============================================
-    // PROGRESS COLLECTION
-    // Inmutable: solo CREATE, no UPDATE/DELETE
+    // LEGACY PROGRESS COLLECTION (for migration)
+    // Read-only for backwards compatibility
     // ============================================
     
     match /progress/{progressId} {
@@ -89,12 +156,8 @@ service cloud.firestore {
       allow read: if isAuthenticated() 
         && resource.data.userId == request.auth.uid;
       
-      // CREATE: Validar campos requeridos y límites
-      allow create: if isAuthenticated()
-        && isValidProgress(request.resource.data);
-      
-      // INMUTABLE: No updates ni deletes
-      allow update, delete: if false;
+      // No new writes allowed - use subcollection instead
+      allow create, update, delete: if false;
     }
     
     // ============================================

@@ -102,8 +102,8 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
               {/* XP Bar - hidden on compact */}
               {resolvedVariant === "full" && (
                 <XPBar
-                  currentXP={user.currentXP}
-                  xpToNextLevel={user.xpToNextLevel}
+                  totalXP={user.totalXP}
+                  nextLevelThreshold={user.nextLevelThreshold}
                   playerLevel={user.playerLevel}
                   variant={isMobile ? "compact" : "full"}
                   className="hidden sm:flex"
@@ -158,8 +158,8 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
                     {/* XP info in mobile menu */}
                     <div className="mt-8 rounded-xl bg-ocean-100 p-4">
                       <XPBar
-                        currentXP={user.currentXP}
-                        xpToNextLevel={user.xpToNextLevel}
+                        totalXP={user.totalXP}
+                        nextLevelThreshold={user.nextLevelThreshold}
                         playerLevel={user.playerLevel}
                         variant="full"
                       />

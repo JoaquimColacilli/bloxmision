@@ -69,6 +69,7 @@ export function levelDataToLevel(data: LevelData): Level {
             target: obj.target,
             item: obj.item,
             count: obj.count,
+            items: obj.items, // Pass items array for collectAll
         }))
 
     const worldId = getWorldIdFromLevelId(data.id)
@@ -100,5 +101,7 @@ export function levelDataToLevel(data: LevelData): Level {
         hints: data.hints || [],
         xpReward: data.xpReward || 50,
         concept: "sequences" as const,
+        // Treasure Fragment config (if level grants a fragment)
+        treasureFragment: data.treasureFragment,
     }
 }

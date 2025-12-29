@@ -11,7 +11,7 @@ import { ProtectedRoute } from "@/components/auth/auth-guard"
 export default function ProfilePage() {
   const { user } = useAuth()
 
-  const xpProgress = user ? (user.currentXP / user.xpToNextLevel) * 100 : 0
+  const xpProgress = user ? (user.totalXP / user.nextLevelThreshold) * 100 : 0
 
   return (
     <ProtectedRoute>
@@ -35,7 +35,7 @@ export default function ProfilePage() {
                   <div className="mb-2 flex justify-between text-sm">
                     <span className="text-ocean-600">Experiencia</span>
                     <span className="font-medium text-ocean-800">
-                      {user.currentXP}/{user.xpToNextLevel} XP
+                      {user.totalXP}/{user.nextLevelThreshold} XP
                     </span>
                   </div>
                   <Progress value={xpProgress} className="h-3 bg-ocean-100" />

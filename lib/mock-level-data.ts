@@ -2,233 +2,8 @@ import type { GridData, Entity, PathStep, LevelData } from "./types"
 
 export function getLevelConfig(levelId: string): LevelData {
   // Extract custom sequence levels
-  if (levelId.startsWith("secuencia-")) {
-    const levelNum = Number.parseInt(levelId.split("-")[1], 10)
+  // Custom sequence levels logic removed - consolidated into numeric IDs below
 
-    // Nivel 1: Linea Recta (Solo Avanzar)
-    if (levelNum === 1) {
-      return {
-        id: levelId,
-        title: "Primeros Pasos",
-        gridSize: { rows: 5, cols: 5 },
-        startPosition: { x: 1, y: 2, facing: "east" },
-        objectives: [{ type: "reach", target: { x: 4, y: 2 } }],
-        obstacles: [],
-        collectibles: [],
-        availableBlocks: ["forward"],
-        optimalSolution: { blockCount: 3 },
-        hints: ["Simplemente avanza hacia la meta", "Necesitas 3 pasos para llegar"],
-      }
-    }
-
-    // Nivel 2: Primer Giro (Avanzar + Girar)
-    if (levelNum === 2) {
-      return {
-        id: levelId,
-        title: "Girando",
-        gridSize: { rows: 5, cols: 5 },
-        startPosition: { x: 1, y: 3, facing: "east" },
-        objectives: [{ type: "reach", target: { x: 3, y: 1 } }],
-        obstacles: [],
-        collectibles: [],
-        availableBlocks: ["forward", "turn-left"],
-        optimalSolution: { blockCount: 5 }, // F2, L, F2
-        hints: ["Avanza hasta alinearte con la meta", "Luego gira a la izquierda y sigue avanzando"],
-      }
-    }
-
-    // Nivel 3: Escalera (Multiples Giros)
-    if (levelNum === 3) {
-      return {
-        id: levelId,
-        title: "La Escalera",
-        gridSize: { rows: 6, cols: 6 },
-        startPosition: { x: 1, y: 4, facing: "east" },
-        objectives: [{ type: "reach", target: { x: 4, y: 1 } }],
-        obstacles: [],
-        collectibles: [],
-        availableBlocks: ["forward", "turn-left", "turn-right"],
-        hints: ["Tendras que girar varias veces", "Imagina que subes una escalera"],
-      }
-    }
-
-    // Nivel 4: Vuelta en U (Giro 180 o dos giros de 90)
-    if (levelNum === 4) {
-      return {
-        id: levelId,
-        title: "Media Vuelta",
-        gridSize: { rows: 5, cols: 5 },
-        startPosition: { x: 1, y: 1, facing: "east" },
-        objectives: [{ type: "reach", target: { x: 1, y: 3 } }],
-        obstacles: [
-          { x: 2, y: 1, type: "wall" },
-          { x: 3, y: 1, type: "wall" },
-          { x: 3, y: 2, type: "wall" },
-          { x: 3, y: 3, type: "wall" },
-          { x: 2, y: 3, type: "wall" },
-        ],
-        collectibles: [],
-        availableBlocks: ["forward", "turn-right"],
-        optimalSolution: { blockCount: 6 },
-        hints: ["Tienes un muro enfrente, no puedes avanzar directo", "Rodea el obstaculo"],
-      }
-    }
-
-    // Nivel 5: Esquivar Obstaculo
-    if (levelNum === 5) {
-      return {
-        id: levelId,
-        title: "Obstaculos",
-        gridSize: { rows: 5, cols: 5 },
-        startPosition: { x: 0, y: 2, facing: "east" },
-        objectives: [{ type: "reach", target: { x: 4, y: 2 } }],
-        obstacles: [{ x: 2, y: 2, type: "rock" }],
-        collectibles: [],
-        availableBlocks: ["forward", "turn-left", "turn-right"],
-        optimalSolution: { blockCount: 6 },
-        hints: ["Hay una roca en tu camino", "Pasa por arriba o por abajo para esquivarla"],
-      }
-    }
-
-    // Nivel 6: Primera Moneda (Acciones)
-    if (levelNum === 6) {
-      return {
-        id: levelId,
-        title: "Tesoros",
-        gridSize: { rows: 5, cols: 5 },
-        startPosition: { x: 1, y: 2, facing: "east" },
-        objectives: [
-          { type: "reach", target: { x: 4, y: 2 } },
-          { type: "collect", item: "coin", count: 1 }
-        ],
-        obstacles: [],
-        collectibles: [{ id: "c1", x: 2, y: 2, type: "coin" }],
-        availableBlocks: ["forward", "collect-coin"],
-        optimalSolution: { blockCount: 4 }, // F1, Collect, F2
-        hints: ["No olvides recoger la moneda antes de llegar a la meta", "Usa el bloque 'Recoger Moneda' cuando estes sobre ella"],
-      }
-    }
-
-    // Nivel 7: Varias Monedas
-    if (levelNum === 7) {
-      return {
-        id: levelId,
-        title: "Coleccionista",
-        gridSize: { rows: 5, cols: 5 },
-        startPosition: { x: 0, y: 2, facing: "east" },
-        objectives: [
-          { type: "reach", target: { x: 4, y: 2 } },
-          { type: "collect", item: "coin", count: 2 }
-        ],
-        collectibles: [
-          { id: "c1", x: 1, y: 2, type: "coin" },
-          { id: "c2", x: 3, y: 2, type: "coin" }
-        ],
-        obstacles: [],
-        availableBlocks: ["forward", "collect-coin"],
-        optimalSolution: { blockCount: 6 },
-        hints: ["Recoge todas las monedas en tu camino"],
-      }
-    }
-
-    // Nivel 8: Monedas y Giros
-    if (levelNum === 8) {
-      return {
-        id: levelId,
-        title: "Ruta de Monedas",
-        gridSize: { rows: 5, cols: 5 },
-        startPosition: { x: 1, y: 1, facing: "east" },
-        objectives: [
-          { type: "reach", target: { x: 3, y: 3 } },
-          { type: "collectAll", items: ["coin"] }
-        ],
-        collectibles: [
-          { id: "c1", x: 1, y: 3, type: "coin" },
-          { id: "c2", x: 3, y: 1, type: "coin" }
-        ],
-        obstacles: [{ x: 2, y: 2, type: "tree" }],
-        availableBlocks: ["forward", "turn-left", "collect-coin"],
-        hints: ["Planea tu ruta para pasar por ambas monedas"],
-      }
-    }
-
-    // Nivel 9: Laberinto con acciones
-    if (levelNum === 9) {
-      return {
-        id: levelId,
-        title: "El Laberinto",
-        gridSize: { rows: 6, cols: 6 },
-        startPosition: { x: 0, y: 0, facing: "east" },
-        objectives: [{ type: "reach", target: { x: 5, y: 5 } }],
-        obstacles: [
-          { x: 1, y: 0, type: "wall" }, { x: 3, y: 0, type: "wall" },
-          { x: 1, y: 1, type: "wall" }, { x: 3, y: 1, type: "wall" }, { x: 5, y: 1, type: "wall" },
-          { x: 1, y: 2, type: "wall" }, { x: 3, y: 2, type: "wall" }, { x: 5, y: 2, type: "wall" },
-          { x: 5, y: 3, type: "wall" },
-          { x: 0, y: 4, type: "wall" }, { x: 1, y: 4, type: "wall" }, { x: 2, y: 4, type: "wall" }, { x: 3, y: 4, type: "wall" }, { x: 5, y: 4, type: "wall" },
-        ],
-        collectibles: [{ id: "g1", type: "gem", x: 0, y: 5 }], // Bonus
-        availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin"], // No coin needed but maybe gem?
-        hints: ["Sigue el camino libre", "Cuidado con los callejones sin salida"],
-      }
-    }
-
-    // Nivel 10: Intro Repetir (Patron simple)
-    if (levelNum === 10) {
-      return {
-        id: levelId,
-        title: "Patrones",
-        gridSize: { rows: 8, cols: 8 },
-        startPosition: { x: 1, y: 1, facing: "east" },
-        objectives: [{ type: "reach", target: { x: 7, y: 1 } }],
-        obstacles: [],
-        collectibles: [],
-        availableBlocks: ["forward", "repeat"],
-        optimalSolution: { blockCount: 2 }, // Repeat 6 times Forward
-        hints: ["En lugar de usar muchos bloques 'Avanzar', usa un bloque 'Repetir'", "Avanza 6 veces"],
-      }
-    }
-
-    // Nivel 11: Repetir Cuadrado
-    if (levelNum === 11) {
-      return {
-        id: levelId,
-        title: "El Cuadrado",
-        gridSize: { rows: 6, cols: 6 },
-        startPosition: { x: 1, y: 1, facing: "east" },
-        objectives: [{ type: "reach", target: { x: 5, y: 5 } }],
-        obstacles: [],
-        collectibles: [],
-        availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
-        hints: ["Busca un patron que se repita", "Avanzar y girar, avanzar y girar..."],
-      }
-    }
-
-    // Nivel 12: Desafio Final Secuencia
-    if (levelNum === 12) {
-      return {
-        id: levelId,
-        title: "Gran Desafio",
-        gridSize: { rows: 7, cols: 7 },
-        startPosition: { x: 0, y: 0, facing: "east" },
-        objectives: [
-          { type: "reach", target: { x: 6, y: 6 } },
-          { type: "collectAll", items: ["coin"] }
-        ],
-        obstacles: [
-          { x: 0, y: 3, type: "rock" }, { x: 1, y: 3, type: "rock" }, { x: 2, y: 3, type: "rock" },
-          { x: 4, y: 3, type: "rock" }, { x: 5, y: 3, type: "rock" }, { x: 6, y: 3, type: "rock" },
-        ],
-        collectibles: [
-          { id: "c1", x: 0, y: 6, type: "coin" },
-          { id: "c2", x: 6, y: 0, type: "coin" },
-          { id: "c3", x: 3, y: 3, type: "coin" } // Bridge coin
-        ],
-        availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
-        hints: ["Combina todo lo que has aprendido", "Usa repeticiones donde puedas"],
-      }
-    }
-  }
   // ========== WORLD 1 LEVELS (1-1 to 1-12) ==========
   // Progressive difficulty: 4x4 (1-6), 5x5 (7-9), 7x7 (10-12)
 
@@ -258,9 +33,9 @@ export function getLevelConfig(levelId: string): LevelData {
       objectives: [{ type: "reach", target: { x: 2, y: 2 } }],
       obstacles: [],
       collectibles: [],
-      availableBlocks: ["forward", "turn-right"],
+      availableBlocks: ["forward", "turn-right", "turn-left"],
       optimalSolution: { blockCount: 4 },
-      hints: ["Avanza, gira a la derecha, y sigue avanzando"],
+      hints: ["Avanza, gira a la derecha (o izquierda), y sigue avanzando"],
     }
   }
 
@@ -292,9 +67,15 @@ export function getLevelConfig(levelId: string): LevelData {
       ],
       obstacles: [],
       collectibles: [{ id: "c1", x: 2, y: 1, type: "coin" }],
-      availableBlocks: ["forward", "collect-coin"],
+      availableBlocks: ["forward", "collect-coin", "turn-right", "turn-left"],
       optimalSolution: { blockCount: 4 },
       hints: ["Recoge la moneda cuando estes sobre ella"],
+      treasureFragment: {
+        fragmentId: "fragment-1-1",
+        worldId: 1,
+        fragmentNumber: 1,
+        description: "Primer fragmento de la Isla Secuencia"
+      },
     }
   }
 
@@ -311,7 +92,7 @@ export function getLevelConfig(levelId: string): LevelData {
       ],
       obstacles: [],
       collectibles: [{ id: "c1", x: 2, y: 2, type: "coin" }],
-      availableBlocks: ["forward", "turn-right", "collect-coin"],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin"],
       hints: ["La moneda no esta en linea recta!"],
     }
   }
@@ -367,6 +148,12 @@ export function getLevelConfig(levelId: string): LevelData {
       collectibles: [{ id: "c1", x: 3, y: 1, type: "coin" }],
       availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin"],
       hints: ["Recoge la moneda antes de llegar a la meta"],
+      treasureFragment: {
+        fragmentId: "fragment-1-2",
+        worldId: 1,
+        fragmentNumber: 2,
+        description: "Segundo fragmento de la Isla Secuencia"
+      },
     }
   }
 
@@ -443,6 +230,327 @@ export function getLevelConfig(levelId: string): LevelData {
       ],
       availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
       hints: ["Usa todo lo que aprendiste!"],
+      treasureFragment: {
+        fragmentId: "fragment-1-3",
+        worldId: 1,
+        fragmentNumber: 3,
+        description: "Tercer fragmento de la Isla Secuencia"
+      },
+    }
+  }
+
+  // ========== WORLD 2 LEVELS (Bucles) - Fragment levels only ==========
+
+  if (levelId === "2-4") {
+    return {
+      id: levelId,
+      title: "Bucle Simple",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 2, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 4, y: 2 } }],
+      obstacles: [],
+      collectibles: [],
+      availableBlocks: ["forward", "repeat"],
+      optimalSolution: { blockCount: 2 },
+      hints: ["Usa el bloque Repetir para avanzar 4 veces"],
+      treasureFragment: {
+        fragmentId: "fragment-2-1",
+        worldId: 2,
+        fragmentNumber: 1,
+        description: "Primer fragmento de la Isla Bucles"
+      },
+    }
+  }
+
+  if (levelId === "2-8") {
+    return {
+      id: levelId,
+      title: "Bucle con Giros",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 5, y: 5 } }],
+      obstacles: [],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "repeat"],
+      hints: ["Avanza y gira en un patrón repetible"],
+      treasureFragment: {
+        fragmentId: "fragment-2-2",
+        worldId: 2,
+        fragmentNumber: 2,
+        description: "Segundo fragmento de la Isla Bucles"
+      },
+    }
+  }
+
+  if (levelId === "2-12") {
+    return {
+      id: levelId,
+      title: "Maestro del Bucle",
+      gridSize: { rows: 7, cols: 7 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 6, y: 6 } },
+        { type: "collect", item: "coin", count: 4 },
+      ],
+      obstacles: [],
+      collectibles: [
+        { id: "c1", x: 2, y: 0, type: "coin" },
+        { id: "c2", x: 4, y: 2, type: "coin" },
+        { id: "c3", x: 2, y: 4, type: "coin" },
+        { id: "c4", x: 4, y: 6, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["Encuentra el patrón en las monedas"],
+      treasureFragment: {
+        fragmentId: "fragment-2-3",
+        worldId: 2,
+        fragmentNumber: 3,
+        description: "Tercer fragmento de la Isla Bucles"
+      },
+    }
+  }
+
+  // ========== WORLD 3 LEVELS (Decisiones) - Fragment levels only ==========
+
+  if (levelId === "3-4") {
+    return {
+      id: levelId,
+      title: "Primera Decisión",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 2, y: 0, facing: "south" },
+      objectives: [{ type: "reach", target: { x: 2, y: 4 } }],
+      obstacles: [{ x: 2, y: 2, type: "rock" }],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "if-blocked"],
+      hints: ["Usa Si-Bloqueado para decidir girar"],
+      treasureFragment: {
+        fragmentId: "fragment-3-1",
+        worldId: 3,
+        fragmentNumber: 1,
+        description: "Primer fragmento de la Isla Decisiones"
+      },
+    }
+  }
+
+  if (levelId === "3-8") {
+    return {
+      id: levelId,
+      title: "Caminos Múltiples",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 3, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 5, y: 3 } },
+        { type: "collect", item: "coin", count: 1 },
+      ],
+      obstacles: [
+        { x: 2, y: 2, type: "rock" },
+        { x: 2, y: 3, type: "rock" },
+        { x: 2, y: 4, type: "rock" },
+      ],
+      collectibles: [{ id: "c1", x: 4, y: 1, type: "coin" }],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "if-blocked", "repeat"],
+      hints: ["El muro te obliga a tomar otro camino"],
+      treasureFragment: {
+        fragmentId: "fragment-3-2",
+        worldId: 3,
+        fragmentNumber: 2,
+        description: "Segundo fragmento de la Isla Decisiones"
+      },
+    }
+  }
+
+  if (levelId === "3-12") {
+    return {
+      id: levelId,
+      title: "Laberinto Inteligente",
+      gridSize: { rows: 7, cols: 7 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 6, y: 6 } }],
+      obstacles: [
+        { x: 1, y: 0, type: "rock" },
+        { x: 1, y: 1, type: "rock" },
+        { x: 3, y: 2, type: "rock" },
+        { x: 3, y: 3, type: "rock" },
+        { x: 5, y: 4, type: "rock" },
+        { x: 5, y: 5, type: "rock" },
+      ],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "if-blocked", "repeat"],
+      hints: ["Usa condicionales dentro de bucles"],
+      treasureFragment: {
+        fragmentId: "fragment-3-3",
+        worldId: 3,
+        fragmentNumber: 3,
+        description: "Tercer fragmento de la Isla Decisiones"
+      },
+    }
+  }
+
+  // ========== WORLD 4 LEVELS (Memoria/Variables) - Fragment levels only ==========
+
+  if (levelId === "4-4") {
+    return {
+      id: levelId,
+      title: "Contador de Monedas",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 2, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 4, y: 2 } },
+        { type: "collect", item: "coin", count: 3 },
+      ],
+      obstacles: [],
+      collectibles: [
+        { id: "c1", x: 1, y: 2, type: "coin" },
+        { id: "c2", x: 2, y: 2, type: "coin" },
+        { id: "c3", x: 3, y: 2, type: "coin" },
+      ],
+      availableBlocks: ["forward", "collect-coin", "variable", "repeat"],
+      hints: ["Guarda el conteo en una variable"],
+      treasureFragment: {
+        fragmentId: "fragment-4-1",
+        worldId: 4,
+        fragmentNumber: 1,
+        description: "Primer fragmento de la Isla Memoria"
+      },
+    }
+  }
+
+  if (levelId === "4-8") {
+    return {
+      id: levelId,
+      title: "Memoria Direccional",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 0, facing: "south" },
+      objectives: [{ type: "reach", target: { x: 5, y: 5 } }],
+      obstacles: [
+        { x: 2, y: 2, type: "rock" },
+        { x: 3, y: 3, type: "rock" },
+      ],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "variable", "repeat", "if-blocked"],
+      hints: ["Recuerda cuántas veces has girado"],
+      treasureFragment: {
+        fragmentId: "fragment-4-2",
+        worldId: 4,
+        fragmentNumber: 2,
+        description: "Segundo fragmento de la Isla Memoria"
+      },
+    }
+  }
+
+  if (levelId === "4-12") {
+    return {
+      id: levelId,
+      title: "Cálculo Pirata",
+      gridSize: { rows: 7, cols: 7 },
+      startPosition: { x: 0, y: 3, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 6, y: 3 } },
+        { type: "collect", item: "coin", count: 6 },
+      ],
+      obstacles: [],
+      collectibles: [
+        { id: "c1", x: 1, y: 1, type: "coin" },
+        { id: "c2", x: 1, y: 5, type: "coin" },
+        { id: "c3", x: 3, y: 3, type: "coin" },
+        { id: "c4", x: 5, y: 1, type: "coin" },
+        { id: "c5", x: 5, y: 5, type: "coin" },
+        { id: "c6", x: 6, y: 3, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "variable", "repeat", "if-blocked"],
+      hints: ["Usa variables para rastrear monedas"],
+      treasureFragment: {
+        fragmentId: "fragment-4-3",
+        worldId: 4,
+        fragmentNumber: 3,
+        description: "Tercer fragmento de la Isla Memoria"
+      },
+    }
+  }
+
+  // ========== WORLD 5 LEVELS (Funciones) - Fragment levels only ==========
+
+  if (levelId === "5-4") {
+    return {
+      id: levelId,
+      title: "Mi Primera Función",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 2, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 4, y: 2 } }],
+      obstacles: [],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "function-define", "function-call"],
+      optimalSolution: { blockCount: 3 },
+      hints: ["Define una función para avanzar varias veces"],
+      treasureFragment: {
+        fragmentId: "fragment-5-1",
+        worldId: 5,
+        fragmentNumber: 1,
+        description: "Primer fragmento de la Isla Funciones"
+      },
+    }
+  }
+
+  if (levelId === "5-8") {
+    return {
+      id: levelId,
+      title: "Funciones con Parámetros",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 0, facing: "south" },
+      objectives: [
+        { type: "reach", target: { x: 5, y: 5 } },
+        { type: "collect", item: "coin", count: 2 },
+      ],
+      obstacles: [],
+      collectibles: [
+        { id: "c1", x: 2, y: 2, type: "coin" },
+        { id: "c2", x: 4, y: 4, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "function-define", "function-call", "repeat"],
+      hints: ["Crea una función que reciba cuántos pasos dar"],
+      treasureFragment: {
+        fragmentId: "fragment-5-2",
+        worldId: 5,
+        fragmentNumber: 2,
+        description: "Segundo fragmento de la Isla Funciones"
+      },
+    }
+  }
+
+  if (levelId === "5-12") {
+    return {
+      id: levelId,
+      title: "¡El Tesoro Final!",
+      gridSize: { rows: 8, cols: 8 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 7, y: 7 } },
+        { type: "collect", item: "coin", count: 8 },
+      ],
+      obstacles: [
+        { x: 2, y: 2, type: "rock" },
+        { x: 5, y: 2, type: "rock" },
+        { x: 2, y: 5, type: "rock" },
+        { x: 5, y: 5, type: "rock" },
+      ],
+      collectibles: [
+        { id: "c1", x: 1, y: 1, type: "coin" },
+        { id: "c2", x: 3, y: 1, type: "coin" },
+        { id: "c3", x: 6, y: 1, type: "coin" },
+        { id: "c4", x: 1, y: 4, type: "coin" },
+        { id: "c5", x: 6, y: 4, type: "coin" },
+        { id: "c6", x: 1, y: 6, type: "coin" },
+        { id: "c7", x: 4, y: 6, type: "coin" },
+        { id: "c8", x: 7, y: 7, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "function-define", "function-call", "repeat", "if-blocked", "variable"],
+      hints: ["Usa todo lo que aprendiste - este es el desafío final!"],
+      treasureFragment: {
+        fragmentId: "fragment-5-3",
+        worldId: 5,
+        fragmentNumber: 3,
+        description: "¡Fragmento final! El Mapa del Tesoro está completo"
+      },
     }
   }
 

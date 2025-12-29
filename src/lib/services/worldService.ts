@@ -3,6 +3,7 @@ import { db } from '../firebase';
 
 export interface WorldDefinition {
     id: string;
+    numericId: string; // Numeric prefix for level IDs (e.g., "1" for levels 1-1, 1-2, etc.)
     name: string;
     description: string;
     concept: string;
@@ -15,6 +16,7 @@ export interface WorldDefinition {
 export const WORLD_DEFINITIONS: WorldDefinition[] = [
     {
         id: "secuencia",
+        numericId: "1",  // Levels are 1-1, 1-2, etc.
         name: "Isla Secuencia",
         description: "Aprende a dar ordenes paso a paso",
         concept: "Secuencias",
@@ -23,6 +25,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     },
     {
         id: "bucle",
+        numericId: "2",  // Levels are 2-1, 2-2, etc.
         name: "Isla Bucle",
         description: "Domina los ciclos y repeticiones",
         concept: "Bucles",
@@ -32,6 +35,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     },
     {
         id: "decision",
+        numericId: "3",  // Levels are 3-1, 3-2, etc.
         name: "Isla Decision",
         description: "Toma decisiones con condiciones",
         concept: "Condicionales",
@@ -41,6 +45,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     },
     {
         id: "memoria",
+        numericId: "4",  // Levels are 4-1, 4-2, etc.
         name: "Isla Memoria",
         description: "Guarda y recuerda valores",
         concept: "Variables",
@@ -50,6 +55,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     },
     {
         id: "funcion",
+        numericId: "5",  // Levels are 5-1, 5-2, etc.
         name: "Isla Funcion",
         description: "Crea bloques de codigo reutilizables",
         concept: "Funciones",
@@ -79,15 +85,28 @@ export async function getUserWorldsProgress(userId: string): Promise<WorldProgre
 
     const snapshot = await getDocs(q);
 
-    // Count completed levels per world
+    // Helper to normalize worldId to semantic format (e.g., "1" -> "secuencia")
+    const normalizeWorldId = (wId: string): string => {
+        const numericToSemantic: Record<string, string> = {
+            "1": "secuencia",
+            "2": "bucle",
+            "3": "decision",
+            "4": "memoria",
+            "5": "funcion",
+        };
+        return numericToSemantic[wId] || wId;
+    };
+
+    // Count completed levels per world (normalize worldId)
     const completedByWorld: Record<string, Set<string>> = {};
 
     snapshot.forEach(doc => {
         const data = doc.data();
-        const worldId = data.worldId;
+        const rawWorldId = data.worldId;
         const levelId = data.levelId;
 
-        if (worldId && levelId) {
+        if (rawWorldId && levelId) {
+            const worldId = normalizeWorldId(rawWorldId);
             if (!completedByWorld[worldId]) {
                 completedByWorld[worldId] = new Set();
             }
@@ -159,17 +178,29 @@ export async function getUserLevelsForWorld(userId: string, worldId: string): Pr
     const worldDef = WORLD_DEFINITIONS.find(w => w.id === worldId);
     if (!worldDef) return [];
 
-    // Get user progress for this world
-    const q = query(
+    // Get user progress for this world - query by semantic worldId (e.g., "secuencia")
+    const q1 = query(
         collection(db, 'progress'),
         where('userId', '==', userId),
         where('worldId', '==', worldId)
     );
 
-    const snapshot = await getDocs(q);
+    // Also query by numeric worldId (e.g., "1") for legacy data
+    const q2 = query(
+        collection(db, 'progress'),
+        where('userId', '==', userId),
+        where('worldId', '==', worldDef.numericId)
+    );
+
+    const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
     const progressMap = new Map();
 
-    snapshot.forEach(doc => {
+    // Merge results from both queries
+    snapshot1.forEach(doc => {
+        const data = doc.data();
+        progressMap.set(data.levelId, data);
+    });
+    snapshot2.forEach(doc => {
         const data = doc.data();
         progressMap.set(data.levelId, data);
     });
@@ -179,9 +210,8 @@ export async function getUserLevelsForWorld(userId: string, worldId: string): Pr
     let previousLevelCompleted = true; // First level unlocked by default if world is unlocked
 
     for (let i = 1; i <= worldDef.totalLevels; i++) {
-        const levelId = `${worldId}-${i}`;
-        // Support legacy ID format if needed, though clean format is preferred
-        // const legacyId = i === 1 ? `${worldId}-1` : `${worldId}-${i}`; 
+        // Use numeric format for level IDs (e.g., "1-1", "1-2", "2-1", etc.)
+        const levelId = `${worldDef.numericId}-${i}`;
 
         const progress = progressMap.get(levelId);
         const isCompleted = !!progress;
@@ -216,4 +246,46 @@ export async function getUserLevelsForWorld(userId: string, worldId: string): Pr
 export async function getWorldProgress(userId: string, worldId: string): Promise<WorldProgress | null> {
     const allProgress = await getUserWorldsProgress(userId);
     return allProgress.find(w => w.worldId === worldId) || null;
+}
+
+/**
+ * Get the maximum level number that a user can access in a world.
+ * Returns the highest completed level + 1, or 1 if no levels completed.
+ * 
+ * @param userId - The user's ID
+ * @param worldNumericId - The numeric world ID (e.g., "1" for secuencia)
+ * @returns The maximum accessible level number (1-based)
+ */
+export async function getMaxUnlockedLevelNum(userId: string, worldNumericId: string): Promise<number> {
+    // Get all progress for this user in this world
+    const q = query(
+        collection(db, 'progress'),
+        where('userId', '==', userId)
+    );
+
+    const snapshot = await getDocs(q);
+
+    // Find the highest completed level number in this world
+    let maxCompletedLevel = 0;
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const levelId = data.levelId as string;
+
+        if (levelId) {
+            // Parse level ID format: "worldNum-levelNum" (e.g., "1-5")
+            const [worldNum, levelNumStr] = levelId.split('-');
+
+            if (worldNum === worldNumericId) {
+                const levelNum = parseInt(levelNumStr, 10);
+                if (!isNaN(levelNum) && levelNum > maxCompletedLevel) {
+                    maxCompletedLevel = levelNum;
+                }
+            }
+        }
+    });
+
+    // User can access the next level after their highest completed
+    // Always at least level 1 is unlocked
+    return maxCompletedLevel + 1;
 }

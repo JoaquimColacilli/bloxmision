@@ -132,6 +132,22 @@ export function getXPToNextLevel(totalXP: number): number {
 }
 
 /**
+ * Get the XP threshold for the next level (the minXP of the next player level)
+ * For example, if at 410 XP (Navegante), returns 600 (Timonel threshold)
+ */
+export function getNextLevelThreshold(totalXP: number): number {
+    const currentIndex = PLAYER_LEVELS.findIndex(
+        (l, i, arr) => totalXP >= l.minXP && (i === arr.length - 1 || totalXP < arr[i + 1].minXP)
+    )
+
+    if (currentIndex === PLAYER_LEVELS.length - 1) {
+        return PLAYER_LEVELS[currentIndex].minXP // Already at max level
+    }
+
+    return PLAYER_LEVELS[currentIndex + 1].minXP
+}
+
+/**
  * Get current XP progress within current level
  */
 export function getCurrentLevelXP(totalXP: number): number {
@@ -140,4 +156,23 @@ export function getCurrentLevelXP(totalXP: number): number {
         .find((l) => totalXP >= l.minXP)
 
     return totalXP - (currentLevel?.minXP ?? 0)
+}
+
+/**
+ * Get total XP span of the current level (max XP needed to complete this level)
+ * For example, Navegante spans 300-600, so totalXP for this level is 300
+ */
+export function getCurrentLevelTotalXP(totalXP: number): number {
+    const currentIndex = PLAYER_LEVELS.findIndex(
+        (l, i, arr) => totalXP >= l.minXP && (i === arr.length - 1 || totalXP < arr[i + 1].minXP)
+    )
+
+    if (currentIndex === PLAYER_LEVELS.length - 1) {
+        return 0 // Max level - no more XP needed
+    }
+
+    const currentLevelMinXP = PLAYER_LEVELS[currentIndex].minXP
+    const nextLevelMinXP = PLAYER_LEVELS[currentIndex + 1].minXP
+
+    return nextLevelMinXP - currentLevelMinXP
 }

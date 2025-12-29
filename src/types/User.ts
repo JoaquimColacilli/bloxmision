@@ -8,7 +8,7 @@ export interface User {
     currentWorld: number;        // 1-5
     currentLevel: number;
     totalXP: number;
-    playerLevel: 'Grumete' | 'Marinero' | 'Navegante' | 'Capitán Junior' | 'Capitán Experto';
+    playerLevel: string;
     streak: {
         current: number;
         longest: number;
@@ -21,4 +21,9 @@ export interface User {
         musicEnabled: boolean;
         hintsEnabled: boolean;
     };
+    // Treasure Fragment System
+    unlockedFragmentsMap: Record<string, true>;  // { "fragment-1-1": true, ... }
+    treasureFragmentsCount: number;               // Must equal Object.keys(unlockedFragmentsMap).length
+    mapCompleted: boolean;                        // True when treasureFragmentsCount === 15
 }
+
