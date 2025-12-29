@@ -24,33 +24,61 @@ interface TutorialOverlayProps {
 export function TutorialOverlay({ steps, isOpen, onClose, onComplete }: TutorialOverlayProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   const step = steps[currentStep]
 
-  // Find and highlight target element
+  // Find and highlight target element with retry logic
   useEffect(() => {
     if (!isOpen || !step) return
+
+    let timeoutId: NodeJS.Timeout
+    let retries = 0
+    const maxRetries = 5
 
     const findTarget = () => {
       const element = document.querySelector(step.target)
       if (element) {
         const rect = element.getBoundingClientRect()
-        setTargetRect(rect)
-        element.scrollIntoView({ behavior: "smooth", block: "center" })
+        // Only set if element is visible (has dimensions)
+        if (rect.width > 0 && rect.height > 0) {
+          setTargetRect(rect)
+          element.scrollIntoView({ behavior: "smooth", block: "center" })
+          setRetryCount(0)
+          return
+        }
+      }
+
+      // Retry if not found and under limit
+      retries++
+      if (retries < maxRetries) {
+        timeoutId = setTimeout(findTarget, 300)
+        setRetryCount(retries)
       } else {
+        // Give up - show centered tooltip
         setTargetRect(null)
+        setRetryCount(0)
       }
     }
 
-    // Small delay to ensure elements are rendered
-    const timeout = setTimeout(findTarget, 200)
+    // Initial delay to ensure DOM is ready
+    timeoutId = setTimeout(findTarget, 500)
 
     // Re-calculate on resize
-    window.addEventListener("resize", findTarget)
+    const handleResize = () => {
+      const element = document.querySelector(step.target)
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        if (rect.width > 0 && rect.height > 0) {
+          setTargetRect(rect)
+        }
+      }
+    }
+    window.addEventListener("resize", handleResize)
 
     return () => {
-      clearTimeout(timeout)
-      window.removeEventListener("resize", findTarget)
+      clearTimeout(timeoutId)
+      window.removeEventListener("resize", handleResize)
     }
   }, [isOpen, step, currentStep])
 
@@ -81,41 +109,82 @@ export function TutorialOverlay({ steps, isOpen, onClose, onComplete }: Tutorial
 
   if (!isOpen || !step) return null
 
-  // Calculate tooltip position
+  // Calculate tooltip position with improved boundary checks
   const getTooltipStyle = (): React.CSSProperties => {
+    // Center tooltip if no target found
     if (!targetRect) {
-      return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }
+      return {
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        position: "fixed"
+      }
     }
 
-    const padding = 16
+    const padding = 20
+    const tooltipWidth = 320
+    const tooltipHeight = 200 // Approximate height
+
+    // Check if target is visible in viewport
+    const isTargetVisible =
+      targetRect.top >= 0 &&
+      targetRect.left >= 0 &&
+      targetRect.bottom <= window.innerHeight &&
+      targetRect.right <= window.innerWidth
+
+    // If target is not visible, center the tooltip
+    if (!isTargetVisible || targetRect.width === 0 || targetRect.height === 0) {
+      return {
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        position: "fixed"
+      }
+    }
+
+    const centerX = targetRect.left + targetRect.width / 2
+    const centerY = targetRect.top + targetRect.height / 2
 
     switch (step.position) {
-      case "top":
+      case "top": {
+        const top = targetRect.top - padding - tooltipHeight
         return {
-          bottom: `${window.innerHeight - targetRect.top + padding}px`,
-          left: `${Math.min(Math.max(targetRect.left + targetRect.width / 2, 180), window.innerWidth - 180)}px`,
-          transform: "translateX(-50%)",
+          top: Math.max(10, top),
+          left: Math.min(Math.max(centerX - tooltipWidth / 2, 10), window.innerWidth - tooltipWidth - 10),
+          position: "fixed"
         }
-      case "bottom":
+      }
+      case "bottom": {
+        const top = targetRect.bottom + padding
         return {
-          top: `${targetRect.bottom + padding}px`,
-          left: `${Math.min(Math.max(targetRect.left + targetRect.width / 2, 180), window.innerWidth - 180)}px`,
-          transform: "translateX(-50%)",
+          top: Math.min(top, window.innerHeight - tooltipHeight - 10),
+          left: Math.min(Math.max(centerX - tooltipWidth / 2, 10), window.innerWidth - tooltipWidth - 10),
+          position: "fixed"
         }
-      case "left":
+      }
+      case "left": {
+        const left = targetRect.left - padding - tooltipWidth
         return {
-          top: `${targetRect.top + targetRect.height / 2}px`,
-          right: `${window.innerWidth - targetRect.left + padding}px`,
-          transform: "translateY(-50%)",
+          top: Math.min(Math.max(centerY - tooltipHeight / 2, 10), window.innerHeight - tooltipHeight - 10),
+          left: Math.max(10, left),
+          position: "fixed"
         }
-      case "right":
+      }
+      case "right": {
+        const left = targetRect.right + padding
         return {
-          top: `${targetRect.top + targetRect.height / 2}px`,
-          left: `${targetRect.right + padding}px`,
-          transform: "translateY(-50%)",
+          top: Math.min(Math.max(centerY - tooltipHeight / 2, 10), window.innerHeight - tooltipHeight - 10),
+          left: Math.min(left, window.innerWidth - tooltipWidth - 10),
+          position: "fixed"
         }
+      }
       default:
-        return {}
+        return {
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          position: "fixed"
+        }
     }
   }
 

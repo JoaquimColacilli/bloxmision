@@ -101,18 +101,23 @@ export async function createUserProfile(
     return profile
 }
 
+import { calculateXPBreakdown } from "@/src/lib/services/xpCalculator"
+
 /**
  * Convert Firestore UserProfile to app's User type
  */
 export function toAppUser(uid: string, profile: UserProfile): User {
+    // Calculate derived XP stats to ensure consistency
+    const xpStats = calculateXPBreakdown(profile.totalXP || 0)
+
     return {
         id: uid,
         displayName: profile.displayName,
         email: profile.email,
         totalXP: profile.totalXP,
-        currentXP: profile.currentXP,
-        xpToNextLevel: profile.xpToNextLevel,
-        playerLevel: profile.playerLevel,
+        currentXP: xpStats.currentXPInLevel,  // Use calculated value
+        xpToNextLevel: xpStats.xpToNextLevel, // Use calculated value
+        playerLevel: xpStats.level,          // Use calculated value
         currentWorld: profile.currentWorld,
         currentLevel: profile.currentLevel,
         streak: {

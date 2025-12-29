@@ -16,6 +16,9 @@ import { LearningSidebar } from "@/components/help/learning-sidebar"
 import { NewBlockIntroModal, useNewBlocksForLevel } from "@/components/help/new-block-intro-modal"
 import { ProtectedRoute } from "@/components/auth/auth-guard"
 import { useBlockEngine } from "@/hooks/use-block-engine"
+import { useAuth } from "@/contexts/auth-context"
+import { submitLevelProgress } from "@/src/lib/services/progressService"
+import { checkAndAwardBadges } from "@/src/lib/services/badgeService"
 import type { JorcExpression } from "@/components/jorc/jorc-sprite"
 import type { DialogueMood } from "@/components/jorc/jorc-dialogue"
 import { getMockLevelData, getLevelConfig } from "@/lib/mock-level-data"
@@ -41,6 +44,7 @@ const TUTORIAL_STORAGE_KEY = "bloxmision_tutorial_completed"
 export default function PlayPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useAuth()
   const levelId = params.levelId as string
 
   const levelConfig = useMemo(() => getLevelConfig(levelId), [levelId])
@@ -323,12 +327,45 @@ export default function PlayPage() {
     setJorcMessage("")
   }, [])
 
-  const handleNextLevel = useCallback(() => {
+  const handleNextLevel = useCallback(async () => {
+    // Save progress to Firestore before navigating
+    if (user && executionResult?.success) {
+      try {
+        const progressResult = await submitLevelProgress(
+          user.id,
+          levelId,
+          levelConfig as any, // Type cast for compatibility
+          codeBlocks as any,
+          attemptsCount,
+          viewedHintIndex
+        )
+
+        if (progressResult.success) {
+          // Check for new badges
+          const newBadges = await checkAndAwardBadges(user.id, {
+            userId: user.id,
+            levelId,
+            attempts: attemptsCount,
+            usedHints: viewedHintIndex,
+            isOptimal: progressResult.isOptimal
+          })
+
+          // Show bonus message if earned badges
+          if (newBadges.length > 0) {
+            setJorcExpression("celebrating")
+            setJorcMessage(`¡Ganaste ${progressResult.xpEarned} XP y ${newBadges.length} insignia(s) nueva(s)!`)
+          }
+        }
+      } catch (error) {
+        console.error('Error saving progress:', error)
+      }
+    }
+
     setShowSuccessModal(false)
-    // Navigate to next level (simplified logic)
+    // Navigate to next level
     const currentNum = Number.parseInt(levelId.split("-")[1] || "1")
     router.push(`/play/1-${currentNum + 1}`)
-  }, [router, levelId])
+  }, [router, levelId, user, executionResult, levelConfig, codeBlocks, attemptsCount, viewedHintIndex])
 
   const handleRetryFromModal = useCallback(() => {
     setShowSuccessModal(false)
