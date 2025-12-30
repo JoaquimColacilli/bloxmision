@@ -579,7 +579,7 @@ export function getMockLevelData(levelId: string): {
   const tiles: GridData["tiles"] = []
   for (let y = 0; y < config.gridSize.rows; y++) {
     for (let x = 0; x < config.gridSize.cols; x++) {
-      tiles.push({ x, y, type: "grass" })
+      tiles.push({ x, y, type: "water" })
     }
   }
 

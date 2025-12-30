@@ -44,7 +44,24 @@ const directionRotation: Record<Direction, string> = {
   west: "rotate-180",
 }
 
-function GameCellComponent({ x, y, tileType, entity, isPath, pathDirection, onClick, cellSize }: GameCellProps) {
+// Sprites del barco según la dirección
+const boatSprites: Record<Direction, string> = {
+  north: "/sprites/boat_raw/frame-05.png",
+  east: "/sprites/boat_raw/frame-06.png",
+  south: "/sprites/boat_raw/frame-07.png",
+  west: "/sprites/boat_raw/frame-08.png",
+}
+
+function GameCellComponent({
+  x,
+  y,
+  tileType,
+  entity,
+  isPath,
+  pathDirection,
+  onClick,
+  cellSize,
+}: GameCellProps) {
   const handleClick = () => onClick?.(x, y)
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -95,23 +112,18 @@ function GameCellComponent({ x, y, tileType, entity, isPath, pathDirection, onCl
         </span>
       )}
 
-      {/* Jorc character */}
+      {/* Barco/Jorc character */}
       {entity?.type === "jorc" && (
         <div
-          className={cn(
-            "absolute inset-1 flex items-center justify-center rounded-full bg-ocean-600 shadow-lg transition-transform duration-300",
-            directionRotation[entity.facing || "east"],
-          )}
-          aria-label={`Jorc mirando al ${entity.facing || "este"}`}
+          className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
+          aria-label={`Barco mirando al ${entity.facing || "este"}`}
         >
-          {/* Jorc face indicator */}
-          <div className="relative size-full">
-            {/* Body */}
-            <div className="absolute inset-[15%] rounded-full bg-ocean-500" />
-            <div className="absolute right-[15%] top-1/2 size-[20%] -translate-y-1/2 rounded-full bg-white">
-              <div className="absolute right-[20%] top-1/2 size-[50%] -translate-y-1/2 rounded-full bg-ocean-900" />
-            </div>
-          </div>
+          <img
+            src={boatSprites[entity.facing || "east"]}
+            alt={`Barco mirando al ${entity.facing || "este"}`}
+            className="w-[90%] h-[90%] object-contain drop-shadow-md"
+            style={{ imageRendering: "pixelated" }}
+          />
         </div>
       )}
     </div>

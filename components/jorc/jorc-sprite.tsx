@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 
-export type JorcExpression = "neutral" | "happy" | "thinking" | "surprised" | "celebrating" | "worried" | "winking"
+export type JorcExpression = "neutral" | "happy" | "thinking" | "surprised" | "celebrating" | "worried"
 
 interface JorcSpriteProps {
   expression?: JorcExpression
@@ -11,26 +11,39 @@ interface JorcSpriteProps {
   className?: string
 }
 
-const expressionConfig: Record<JorcExpression, { face: string; color: string; eyebrows: string }> = {
-  neutral: { face: "😐", color: "bg-ocean-500", eyebrows: "normal" },
-  happy: { face: "😊", color: "bg-emerald-500", eyebrows: "raised" },
-  thinking: { face: "🤔", color: "bg-amber-500", eyebrows: "furrowed" },
-  surprised: { face: "😮", color: "bg-sky-500", eyebrows: "raised" },
-  celebrating: { face: "🎉", color: "bg-gold-500", eyebrows: "raised" },
-  worried: { face: "😟", color: "bg-orange-500", eyebrows: "furrowed" },
-  winking: { face: "😉", color: "bg-purple-500", eyebrows: "normal" },
+// Map expressions to specific JORC sprite frames
+// Mapping (per tu spritesheet):
+// - Idle down: frame-01, blink: frame-02
+// - Emotes: frame-30 (surprised), frame-31 (thinking-ish), frame-32 (worried/sad)
+// - Attack: frame-25..27
+// - Hurt: frame-28..29
+const expressionSprites: Record<JorcExpression, string> = {
+  neutral: "/sprites/jorc_raw/frame-01.png", // Idle down
+  happy: "/sprites/jorc_raw/frame-02.png", // Blink (se ve más “amable” que neutral)
+  thinking: "/sprites/jorc_raw/frame-31.png", // Emote 2 (pensando / dudando)
+  surprised: "/sprites/jorc_raw/frame-30.png", // Emote 1 (sorpresa)
+  celebrating: "/sprites/jorc_raw/frame-25.png", // Attack frame (acción/celebración)
+  worried: "/sprites/jorc_raw/frame-32.png", // Emote 3 (preocupado/triste)
+}
+
+// Background colors for different expressions
+const expressionColors: Record<JorcExpression, string> = {
+  neutral: "bg-ocean-500",
+  happy: "bg-emerald-500",
+  thinking: "bg-amber-500",
+  surprised: "bg-sky-500",
+  celebrating: "bg-gold-500",
+  worried: "bg-orange-500",
 }
 
 const sizeConfig = {
-  small: { container: "size-16", face: "text-2xl", hat: "size-8" },
-  medium: { container: "size-24", face: "text-4xl", hat: "size-12" },
-  large: { container: "size-32", face: "text-5xl", hat: "size-16" },
+  small: { container: "size-16", sprite: "w-14 h-14", hat: "size-8" },
+  medium: { container: "size-24", sprite: "w-20 h-20", hat: "size-12" },
+  large: { container: "size-32", sprite: "w-28 h-28", hat: "size-16" },
 }
 
 export function JorcSprite({ expression = "neutral", size = "medium", className }: JorcSpriteProps) {
-  const [isBlinking, setIsBlinking] = useState(false)
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-  const blinkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Check for reduced motion preference
   useEffect(() => {
@@ -42,45 +55,22 @@ export function JorcSprite({ expression = "neutral", size = "medium", className 
     return () => mediaQuery.removeEventListener("change", handler)
   }, [])
 
-  // Blinking animation
-  useEffect(() => {
-    if (prefersReducedMotion) return
-
-    const scheduleBlink = () => {
-      const delay = 3000 + Math.random() * 2000 // 3-5 seconds
-      blinkTimeoutRef.current = setTimeout(() => {
-        setIsBlinking(true)
-        setTimeout(() => {
-          setIsBlinking(false)
-          scheduleBlink()
-        }, 150)
-      }, delay)
-    }
-
-    scheduleBlink()
-
-    return () => {
-      if (blinkTimeoutRef.current) {
-        clearTimeout(blinkTimeoutRef.current)
-      }
-    }
-  }, [prefersReducedMotion])
-
-  const config = expressionConfig[expression]
   const sizes = sizeConfig[size]
+  const spriteUrl = expressionSprites[expression]
+  const bgColor = expressionColors[expression]
 
   return (
     <div
       className={cn("relative flex items-center justify-center", className)}
       role="img"
-      aria-label={`Jorc el pirata con expresion ${expression}`}
+      aria-label={`Jorc el pirata (${expression})`}
     >
       {/* Body container with breathing animation */}
       <div
         className={cn(
           "relative flex items-center justify-center rounded-full shadow-lg transition-colors duration-300",
           sizes.container,
-          config.color,
+          bgColor,
           !prefersReducedMotion && "animate-breathe",
         )}
       >
@@ -97,22 +87,12 @@ export function JorcSprite({ expression = "neutral", size = "medium", className 
           <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-white">☠️</div>
         </div>
 
-        {/* Face */}
-        <div className={cn("relative z-10 transition-opacity duration-100", sizes.face, isBlinking && "opacity-0")}>
-          {config.face}
-        </div>
-
-        {/* Blink overlay */}
-        {isBlinking && <div className={cn("absolute z-10", sizes.face)}>😑</div>}
-
-        {/* Eyepatch */}
-        <div
-          className={cn(
-            "absolute rounded-full bg-gray-900",
-            size === "small" && "right-2 top-3 size-3",
-            size === "medium" && "right-3 top-4 size-4",
-            size === "large" && "right-4 top-5 size-5",
-          )}
+        {/* JORC Sprite Image */}
+        <img
+          src={spriteUrl}
+          alt={`Jorc ${expression}`}
+          className={cn("relative z-10 object-contain drop-shadow-md", sizes.sprite)}
+          style={{ imageRendering: "pixelated" }}
         />
 
         {/* Confetti for celebrating */}

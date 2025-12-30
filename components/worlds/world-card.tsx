@@ -11,27 +11,30 @@ interface WorldCardProps {
   onEnterWorld: (worldId: string) => void
 }
 
-const worldIcons: Record<string, string> = {
-  secuencia: "/placeholder.svg?height=80&width=80",
-  bucle: "/placeholder.svg?height=80&width=80",
-  decision: "/placeholder.svg?height=80&width=80",
-  memoria: "/placeholder.svg?height=80&width=80",
-  funcion: "/placeholder.svg?height=80&width=80",
+const worldIcons: Record<string, { unlocked: string; locked: string }> = {
+  secuencia: { unlocked: "/islands/secuencia.png", locked: "/islands/secuencia-locked.png" },
+  bucle: { unlocked: "/islands/bucle.png", locked: "/islands/bucle-locked.png" },
+  decision: { unlocked: "/islands/decision.png", locked: "/islands/decision-locked.png" },
+  memoria: { unlocked: "/islands/memoria.png", locked: "/islands/memoria-locked.png" },
+  funcion: { unlocked: "/islands/funcion.png", locked: "/islands/funcion-locked.png" },
 }
 
 export function WorldCard({ world, previousWorldName, onEnterWorld }: WorldCardProps) {
   const progress = world.totalLevels > 0 ? (world.completedLevels / world.totalLevels) * 100 : 0
   const isCompleted = world.completedLevels === world.totalLevels && world.totalLevels > 0
 
+  // Get the appropriate icon based on unlock status
+  const icons = worldIcons[world.id] || { unlocked: "/islands/secuencia.png", locked: "/islands/secuencia-locked.png" }
+  const iconSrc = world.isUnlocked ? icons.unlocked : icons.locked
+
   return (
     <Card
-      className={`group relative overflow-hidden border-2 transition-all duration-300 ${
-        world.isCurrent
+      className={`group relative overflow-hidden border-2 transition-all duration-300 ${world.isCurrent
           ? "border-gold-400 bg-gradient-to-br from-gold-50 to-sand-50 shadow-lg ring-2 ring-gold-200"
           : world.isUnlocked
             ? "border-ocean-200 bg-white hover:border-ocean-300 hover:shadow-lg"
             : "border-ocean-100 bg-ocean-50/50"
-      }`}
+        }`}
     >
       {/* Current world indicator */}
       {world.isCurrent && <div className="absolute -right-8 -top-8 size-16 rounded-full bg-gold-400/20" />}
@@ -46,19 +49,14 @@ export function WorldCard({ world, previousWorldName, onEnterWorld }: WorldCardP
 
       <CardHeader className="pb-3">
         {/* World illustration */}
-        <div className="relative mx-auto mb-3 size-20 overflow-hidden rounded-xl bg-ocean-100 p-2">
+        <div className="relative mx-auto mb-3 size-20 overflow-hidden rounded-xl p-1">
           <img
-            src={worldIcons[world.id] || "/placeholder.svg?height=80&width=80&query=mystery island pixel art"}
+            src={iconSrc}
             alt={`Ilustracion de ${world.name}`}
-            className={`size-full object-contain transition-transform duration-300 ${
-              world.isUnlocked ? "group-hover:scale-110" : "opacity-50 grayscale"
-            }`}
+            className={`size-full object-contain transition-transform duration-300 ${world.isUnlocked ? "group-hover:scale-110" : ""
+              }`}
+            style={{ imageRendering: "pixelated" }}
           />
-          {!world.isUnlocked && (
-            <div className="absolute inset-0 flex items-center justify-center bg-ocean-900/30">
-              <Lock className="size-8 text-white drop-shadow-lg" />
-            </div>
-          )}
         </div>
 
         <CardTitle className={`text-center text-lg ${world.isUnlocked ? "text-ocean-800" : "text-ocean-400"}`}>
@@ -80,11 +78,10 @@ export function WorldCard({ world, previousWorldName, onEnterWorld }: WorldCardP
           </div>
           <div className="h-2.5 overflow-hidden rounded-full bg-ocean-100">
             <div
-              className={`h-full transition-all duration-500 ${
-                isCompleted
+              className={`h-full transition-all duration-500 ${isCompleted
                   ? "bg-gradient-to-r from-green-400 to-green-500"
                   : "bg-gradient-to-r from-gold-400 to-gold-500"
-              }`}
+                }`}
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -94,11 +91,10 @@ export function WorldCard({ world, previousWorldName, onEnterWorld }: WorldCardP
         {world.isUnlocked ? (
           <Button
             onClick={() => onEnterWorld(world.id)}
-            className={`w-full gap-2 transition-all ${
-              world.isCurrent
+            className={`w-full gap-2 transition-all ${world.isCurrent
                 ? "bg-gold-500 text-ocean-900 hover:bg-gold-600"
                 : "bg-ocean-500 text-white hover:bg-ocean-600"
-            }`}
+              }`}
           >
             {world.isCurrent ? (
               <>

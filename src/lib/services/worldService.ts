@@ -17,7 +17,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     {
         id: "secuencia",
         numericId: "1",  // Levels are 1-1, 1-2, etc.
-        name: "Isla Secuencia",
+        name: "Costa del Primer Rumbo",
         description: "Aprende a dar ordenes paso a paso",
         concept: "Secuencias",
         totalLevels: 12,
@@ -26,7 +26,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     {
         id: "bucle",
         numericId: "2",  // Levels are 2-1, 2-2, etc.
-        name: "Isla Bucle",
+        name: "Remolino de las Mareas",
         description: "Domina los ciclos y repeticiones",
         concept: "Bucles",
         totalLevels: 14,
@@ -36,7 +36,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     {
         id: "decision",
         numericId: "3",  // Levels are 3-1, 3-2, etc.
-        name: "Isla Decision",
+        name: "Arrecife del Juicio",
         description: "Toma decisiones con condiciones",
         concept: "Condicionales",
         totalLevels: 15,
@@ -46,7 +46,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     {
         id: "memoria",
         numericId: "4",  // Levels are 4-1, 4-2, etc.
-        name: "Isla Memoria",
+        name: "Santuario de la Brújula",
         description: "Guarda y recuerda valores",
         concept: "Variables",
         totalLevels: 12,
@@ -56,7 +56,7 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     {
         id: "funcion",
         numericId: "5",  // Levels are 5-1, 5-2, etc.
-        name: "Isla Funcion",
+        name: "Taller de los Encantamientos",
         description: "Crea bloques de codigo reutilizables",
         concept: "Funciones",
         totalLevels: 15,
