@@ -22,10 +22,11 @@ export function ProgressCard({ user, fragments = [] }: ProgressCardProps) {
     fragments.length > 0
       ? fragments
       : Array.from({ length: 15 }).map((_, i) => ({
-          id: `frag-${i + 1}`,
-          order: i + 1,
-          unlocked: i < (treasureFragments || 0),
-        }))
+        id: `frag-${i + 1}`,
+        order: i + 1,
+        unlocked: i < (treasureFragments || 0),
+        imageUrl: `/fragments/fragment-${i + 1}.png`,
+      }))
 
   return (
     <Card className="w-full max-w-md border-2 border-ocean-200 bg-white/80 backdrop-blur">
