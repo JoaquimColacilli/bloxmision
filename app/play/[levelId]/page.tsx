@@ -276,6 +276,29 @@ export default function PlayPage() {
     setCodeBlocks((prev) => prev.filter((_, i) => i !== index))
   }, [])
 
+  // Handle adding a block inside a loop block
+  const handleAddBlockInside = useCallback(
+    (parentInstanceId: string, blockDef: BlockDefinition) => {
+      const childInstance: BlockInstance = {
+        instanceId: `${blockDef.id}-${Date.now()}`,
+        definition: blockDef,
+        params: blockDef.params?.reduce((acc, p) => ({ ...acc, [p.name]: p.default ?? "" }), {}) || {},
+      }
+      setCodeBlocks((prev) =>
+        prev.map((block) => {
+          if (block.instanceId === parentInstanceId) {
+            return {
+              ...block,
+              children: [...(block.children || []), childInstance],
+            }
+          }
+          return block
+        }),
+      )
+    },
+    [],
+  )
+
   const handleClearAll = useCallback(() => {
     setCodeBlocks([])
     resetEngine()
@@ -489,6 +512,7 @@ export default function PlayPage() {
       <CodeArea
         blocks={codeBlocks}
         onAddBlock={handleAddBlock}
+        onAddBlockInside={handleAddBlockInside}
         onReorder={handleReorder}
         onRemoveBlock={handleRemoveBlock}
         onDuplicateBlock={handleDuplicateBlock}

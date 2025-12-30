@@ -41,6 +41,8 @@ interface BlockProps {
   onParamChange?: (instanceId: string, params: Record<string, string | number | boolean>) => void
   onDuplicate?: (instanceId: string) => void
   onDelete?: (instanceId: string) => void
+  // Drop inside callback for loop/conditional blocks
+  onDropInside?: (instanceId: string, blockDef: BlockDefinition) => void
   // Children for loop/conditional blocks
   children?: React.ReactNode
 }
@@ -120,6 +122,9 @@ const ParamEditor = memo(function ParamEditor({
         disabled={disabled}
         className="h-6 w-12 border-white/30 bg-white/20 px-2 text-center text-xs font-bold text-inherit [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         aria-label={param.name}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       />
     )
   }
@@ -150,6 +155,9 @@ const ParamEditor = memo(function ParamEditor({
       disabled={disabled}
       className="h-6 w-20 border-white/30 bg-white/20 px-2 text-xs font-medium text-inherit"
       aria-label={param.name}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
     />
   )
 })
@@ -165,10 +173,12 @@ export const Block = memo(function Block({
   onParamChange,
   onDuplicate,
   onDelete,
+  onDropInside,
   children,
 }: BlockProps) {
   const blockRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isLoopDragOver, setIsLoopDragOver] = useState(false)
 
   // Extract definition and instance data
   const definition = isBlockInstance(block) ? block.definition : block
@@ -217,6 +227,45 @@ export const Block = memo(function Block({
   const handleDragEnd = useCallback(() => {
     setIsDragging(false)
   }, [])
+
+  // Handlers for dropping blocks inside loop
+  const handleLoopDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (disabled || !instanceId) return
+      e.dataTransfer.dropEffect = "copy"
+      setIsLoopDragOver(true)
+    },
+    [disabled, instanceId],
+  )
+
+  const handleLoopDragLeave = useCallback((e: React.DragEvent) => {
+    e.stopPropagation()
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsLoopDragOver(false)
+    }
+  }, [])
+
+  const handleLoopDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      setIsLoopDragOver(false)
+      if (disabled || !instanceId || !onDropInside) return
+
+      try {
+        const data = e.dataTransfer.getData("application/json")
+        if (data) {
+          const blockDef: BlockDefinition = JSON.parse(data)
+          onDropInside(instanceId, blockDef)
+        }
+      } catch {
+        // Invalid data
+      }
+    },
+    [disabled, instanceId, onDropInside],
+  )
 
   const handleParamChange = useCallback(
     (paramName: string, value: string | number | boolean) => {
@@ -320,10 +369,25 @@ export const Block = memo(function Block({
             {/* Middle indent for nested blocks */}
             <div className="flex">
               <div className={cn(bgColor, bdColor, "w-4 border-l-2 border-r-0")} />
-              <div className="min-h-[40px] flex-1 rounded-sm bg-black/10 p-2">
+              <div
+                className={cn(
+                  "min-h-[40px] flex-1 rounded-sm p-2 transition-colors",
+                  isLoopDragOver ? "bg-gold-200/50" : "bg-black/10",
+                )}
+                onDragOver={variant === "code" ? handleLoopDragOver : undefined}
+                onDragLeave={variant === "code" ? handleLoopDragLeave : undefined}
+                onDrop={variant === "code" ? handleLoopDrop : undefined}
+              >
                 {children || (
-                  <div className="flex h-full min-h-[24px] items-center justify-center rounded border-2 border-dashed border-white/30 text-xs text-white/50">
-                    Arrastra bloques aqui
+                  <div
+                    className={cn(
+                      "flex h-full min-h-[24px] items-center justify-center rounded border-2 border-dashed text-xs font-medium transition-colors",
+                      isLoopDragOver
+                        ? "border-gold-500 bg-gold-100 text-gold-700"
+                        : "border-ocean-600/60 bg-ocean-800/20 text-ocean-700",
+                    )}
+                  >
+                    {isLoopDragOver ? "Suelta aquí" : "Arrastra bloques aquí"}
                   </div>
                 )}
               </div>

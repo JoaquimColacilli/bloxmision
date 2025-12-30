@@ -23,6 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 interface CodeAreaProps {
   blocks: BlockInstance[]
   onAddBlock: (block: BlockDefinition, index?: number) => void
+  onAddBlockInside?: (parentInstanceId: string, block: BlockDefinition) => void
   onReorder: (fromIndex: number, toIndex: number) => void
   onRemoveBlock: (index: number) => void
   onDuplicateBlock: (index: number) => void
@@ -37,6 +38,7 @@ interface CodeAreaProps {
 export const CodeArea = memo(function CodeArea({
   blocks,
   onAddBlock,
+  onAddBlockInside,
   onReorder,
   onRemoveBlock,
   onDuplicateBlock,
@@ -246,6 +248,16 @@ export const CodeArea = memo(function CodeArea({
     [blocks, onRemoveBlock],
   )
 
+  // Handle drop inside a loop block
+  const handleDropInside = useCallback(
+    (parentInstanceId: string, blockDef: BlockDefinition) => {
+      if (onAddBlockInside) {
+        onAddBlockInside(parentInstanceId, blockDef)
+      }
+    },
+    [onAddBlockInside],
+  )
+
   const isEmpty = blocks.length === 0
   const isAtMax = blocks.length >= maxBlocks
 
@@ -378,9 +390,28 @@ export const CodeArea = memo(function CodeArea({
                     onParamChange={handleParamChange}
                     onDuplicate={handleDuplicate}
                     onDelete={handleDelete}
+                    onDropInside={handleDropInside}
                     disabled={isRunning}
                     hideActions={isMobile}
-                  />
+                  >
+                    {/* Render children for loop blocks */}
+                    {block.children && block.children.length > 0 && (
+                      <div className="space-y-1">
+                        {block.children.map((childBlock) => (
+                          <Block
+                            key={childBlock.instanceId}
+                            block={childBlock}
+                            variant="code"
+                            onParamChange={handleParamChange}
+                            onDuplicate={handleDuplicate}
+                            onDelete={handleDelete}
+                            disabled={isRunning}
+                            hideActions={isMobile}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </Block>
 
                   {isMobile && longPressIndex === index && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-lg bg-ocean-900/80 p-2">
