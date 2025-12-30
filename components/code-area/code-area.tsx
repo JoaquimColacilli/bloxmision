@@ -23,7 +23,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 interface CodeAreaProps {
   blocks: BlockInstance[]
   onAddBlock: (block: BlockDefinition, index?: number) => void
-  onAddBlockInside?: (parentInstanceId: string, block: BlockDefinition) => void
+  onAddBlockInside?: (parentInstanceId: string, block: BlockDefinition, sourceInstanceId?: string) => void
   onReorder: (fromIndex: number, toIndex: number) => void
   onRemoveBlock: (index: number) => void
   onDuplicateBlock: (index: number) => void
@@ -250,9 +250,9 @@ export const CodeArea = memo(function CodeArea({
 
   // Handle drop inside a loop block
   const handleDropInside = useCallback(
-    (parentInstanceId: string, blockDef: BlockDefinition) => {
+    (parentInstanceId: string, blockDef: BlockDefinition, sourceInstanceId?: string) => {
       if (onAddBlockInside) {
-        onAddBlockInside(parentInstanceId, blockDef)
+        onAddBlockInside(parentInstanceId, blockDef, sourceInstanceId)
       }
     },
     [onAddBlockInside],

@@ -278,14 +278,46 @@ export default function PlayPage() {
 
   // Handle adding a block inside a loop block
   const handleAddBlockInside = useCallback(
-    (parentInstanceId: string, blockDef: BlockDefinition) => {
-      const childInstance: BlockInstance = {
-        instanceId: `${blockDef.id}-${Date.now()}`,
-        definition: blockDef,
-        params: blockDef.params?.reduce((acc, p) => ({ ...acc, [p.name]: p.default ?? "" }), {}) || {},
-      }
-      setCodeBlocks((prev) =>
-        prev.map((block) => {
+    (parentInstanceId: string, blockDef: BlockDefinition, sourceInstanceId?: string) => {
+      setCodeBlocks((prev) => {
+        let blocksToProcess = [...prev]
+        let existingBlock: BlockInstance | null = null
+
+        // If sourceInstanceId is provided, we're moving an existing block
+        if (sourceInstanceId) {
+          // Find and remove the block from its current position
+          // First, check top-level blocks
+          const topLevelIndex = blocksToProcess.findIndex(b => b.instanceId === sourceInstanceId)
+          if (topLevelIndex !== -1) {
+            existingBlock = blocksToProcess[topLevelIndex]
+            blocksToProcess = blocksToProcess.filter((_, i) => i !== topLevelIndex)
+          } else {
+            // Check inside children of loop blocks
+            blocksToProcess = blocksToProcess.map(block => {
+              if (block.children) {
+                const childIndex = block.children.findIndex(c => c.instanceId === sourceInstanceId)
+                if (childIndex !== -1) {
+                  existingBlock = block.children[childIndex]
+                  return {
+                    ...block,
+                    children: block.children.filter((_, i) => i !== childIndex)
+                  }
+                }
+              }
+              return block
+            })
+          }
+        }
+
+        // Create the child instance (use existing block or create new one)
+        const childInstance: BlockInstance = existingBlock || {
+          instanceId: `${blockDef.id}-${Date.now()}`,
+          definition: blockDef,
+          params: blockDef.params?.reduce((acc, p) => ({ ...acc, [p.name]: p.default ?? "" }), {}) || {},
+        }
+
+        // Add to the target parent
+        return blocksToProcess.map((block) => {
           if (block.instanceId === parentInstanceId) {
             return {
               ...block,
@@ -293,8 +325,8 @@ export default function PlayPage() {
             }
           }
           return block
-        }),
-      )
+        })
+      })
     },
     [],
   )

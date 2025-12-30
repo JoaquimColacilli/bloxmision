@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Map, Sparkles, Trophy } from "lucide-react"
 import { useEffect, useState } from "react"
+import Image from "next/image"
 
 interface FragmentUnlockedModalProps {
     isOpen: boolean
@@ -31,6 +32,9 @@ export function FragmentUnlockedModal({
     const parts = fragmentId.split('-')
     const worldNum = parts[1] || '?'
     const fragNum = parts[2] || '?'
+
+    // The fragment image is based on the total count (order 1-15)
+    const fragmentImagePath = `/fragments/fragment-${currentCount}.png`
 
     // Animate on open
     useEffect(() => {
@@ -65,18 +69,26 @@ export function FragmentUnlockedModal({
                 </DialogHeader>
 
                 <div className="flex flex-col items-center py-6 space-y-4">
-                    {/* Animated fragment icon */}
+                    {/* Animated fragment image */}
                     <div
-                        className={`relative p-6 rounded-2xl shadow-lg transition-all duration-700 ${isAnimated ? 'scale-100 rotate-0' : 'scale-0 -rotate-180'
+                        className={`relative p-3 rounded-2xl shadow-lg transition-all duration-700 ${isAnimated ? 'scale-100 rotate-0' : 'scale-0 -rotate-180'
                             } ${isMapComplete
                                 ? "bg-gradient-to-br from-yellow-400 to-amber-500"
                                 : "bg-gradient-to-br from-amber-400 to-orange-500"
                             }`}
                     >
-                        <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-yellow-300 animate-pulse" />
-                        <Map className={`h-16 w-16 ${isMapComplete ? "text-yellow-900" : "text-amber-900"}`} />
+                        <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-yellow-300 animate-pulse z-10" />
+                        <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-amber-200/50">
+                            <Image
+                                src={fragmentImagePath}
+                                alt={`Fragmento ${currentCount} del mapa`}
+                                fill
+                                className="object-cover"
+                                priority
+                            />
+                        </div>
                         {isMapComplete && (
-                            <Sparkles className="absolute -bottom-2 -left-2 h-6 w-6 text-yellow-300 animate-pulse" />
+                            <Sparkles className="absolute -bottom-2 -left-2 h-6 w-6 text-yellow-300 animate-pulse z-10" />
                         )}
                     </div>
 
@@ -99,8 +111,8 @@ export function FragmentUnlockedModal({
                                 <div
                                     style={{ width: `${progressWidth}%` }}
                                     className={`h-full rounded-full transition-all duration-700 ease-out ${isMapComplete
-                                            ? "bg-gradient-to-r from-yellow-400 to-amber-500"
-                                            : "bg-gradient-to-r from-amber-400 to-orange-500"
+                                        ? "bg-gradient-to-r from-yellow-400 to-amber-500"
+                                        : "bg-gradient-to-r from-amber-400 to-orange-500"
                                         }`}
                                 />
                             </div>
@@ -131,8 +143,8 @@ export function FragmentUnlockedModal({
                     <Button
                         onClick={onClose}
                         className={`px-8 ${isMapComplete
-                                ? "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600"
-                                : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                            ? "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600"
+                            : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                             } text-white font-semibold`}
                     >
                         {isMapComplete ? "¡Ver el Tesoro!" : "¡Continuar!"}

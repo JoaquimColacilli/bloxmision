@@ -7,11 +7,18 @@ import { Progress } from "@/components/ui/progress"
 import { Trophy, Flame, Star, Map } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { ProtectedRoute } from "@/components/auth/auth-guard"
+import Image from "next/image"
+import { isValidPlayerLevel, getRankIconPath, type PlayerLevel } from "@/lib/types/player-level"
 
 export default function ProfilePage() {
   const { user } = useAuth()
 
   const xpProgress = user ? (user.totalXP / user.nextLevelThreshold) * 100 : 0
+
+  // Get rank icon if valid level
+  const rankIcon = user && isValidPlayerLevel(user.playerLevel)
+    ? getRankIconPath(user.playerLevel as PlayerLevel)
+    : null
 
   return (
     <ProtectedRoute>
@@ -27,7 +34,20 @@ export default function ProfilePage() {
                   </AvatarFallback>
                 </Avatar>
                 <CardTitle className="mt-4 text-2xl text-ocean-800">{user.displayName}</CardTitle>
-                <p className="text-ocean-600">{user.playerLevel}</p>
+                <div className="flex items-center gap-2">
+                  {rankIcon && (
+                    <div className="relative size-10">
+                      <Image
+                        src={rankIcon}
+                        alt={user.playerLevel}
+                        fill
+                        className="object-contain"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                    </div>
+                  )}
+                  <p className="text-ocean-600 font-medium">{user.playerLevel}</p>
+                </div>
               </CardHeader>
               <CardContent className="flex flex-col gap-6">
                 {/* XP Progress */}

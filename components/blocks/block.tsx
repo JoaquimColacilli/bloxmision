@@ -42,7 +42,8 @@ interface BlockProps {
   onDuplicate?: (instanceId: string) => void
   onDelete?: (instanceId: string) => void
   // Drop inside callback for loop/conditional blocks
-  onDropInside?: (instanceId: string, blockDef: BlockDefinition) => void
+  // sourceInstanceId is provided when moving an existing block (not from palette)
+  onDropInside?: (instanceId: string, blockDef: BlockDefinition, sourceInstanceId?: string) => void
   // Children for loop/conditional blocks
   children?: React.ReactNode
 }
@@ -218,10 +219,15 @@ export const Block = memo(function Block({
     (e: React.DragEvent) => {
       if (disabled) return
       setIsDragging(true)
-      e.dataTransfer.setData("application/json", JSON.stringify(definition))
+      // Include instanceId for blocks already in code area so they can be moved into loops
+      const dragData = {
+        ...definition,
+        sourceInstanceId: instanceId, // Will be undefined for palette blocks
+      }
+      e.dataTransfer.setData("application/json", JSON.stringify(dragData))
       e.dataTransfer.effectAllowed = variant === "palette" ? "copy" : "move"
     },
-    [definition, variant, disabled],
+    [definition, variant, disabled, instanceId],
   )
 
   const handleDragEnd = useCallback(() => {
@@ -257,8 +263,11 @@ export const Block = memo(function Block({
       try {
         const data = e.dataTransfer.getData("application/json")
         if (data) {
-          const blockDef: BlockDefinition = JSON.parse(data)
-          onDropInside(instanceId, blockDef)
+          const parsedData = JSON.parse(data)
+          // Extract the source instance id if present (for moving existing blocks)
+          const { sourceInstanceId, ...blockDef } = parsedData
+          // Pass both the block definition and the source instance id
+          onDropInside(instanceId, blockDef as BlockDefinition, sourceInstanceId)
         }
       } catch {
         // Invalid data
@@ -368,23 +377,27 @@ export const Block = memo(function Block({
 
             {/* Middle indent for nested blocks */}
             <div className="flex">
-              <div className={cn(bgColor, bdColor, "w-4 border-l-2 border-r-0")} />
+              <div className={cn(bgColor, bdColor, "w-4 shrink-0 border-l-2 border-r-0")} />
               <div
                 className={cn(
-                  "min-h-[40px] flex-1 rounded-sm p-2 transition-colors",
+                  "min-h-[40px] flex-1 overflow-hidden rounded-sm p-2 transition-colors",
                   isLoopDragOver ? "bg-gold-200/50" : "bg-black/10",
                 )}
                 onDragOver={variant === "code" ? handleLoopDragOver : undefined}
                 onDragLeave={variant === "code" ? handleLoopDragLeave : undefined}
                 onDrop={variant === "code" ? handleLoopDrop : undefined}
               >
-                {children || (
+                {children ? (
+                  <div className="flex flex-col gap-1">
+                    {children}
+                  </div>
+                ) : (
                   <div
                     className={cn(
                       "flex h-full min-h-[24px] items-center justify-center rounded border-2 border-dashed text-xs font-medium transition-colors",
                       isLoopDragOver
                         ? "border-gold-500 bg-gold-100 text-gold-700"
-                        : "border-ocean-600/60 bg-ocean-800/20 text-ocean-700",
+                        : "border-ocean-400 bg-ocean-100/50 text-ocean-600",
                     )}
                   >
                     {isLoopDragOver ? "Suelta aquí" : "Arrastra bloques aquí"}
