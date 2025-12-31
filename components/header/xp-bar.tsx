@@ -48,7 +48,7 @@ export function XPBar({ totalXP, nextLevelThreshold, playerLevel, variant = "ful
 
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      <div className="flex items-center justify-between text-xs">
+      <div className="flex items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-1.5">
           {rankIcon && (
             <div className="relative size-5 shrink-0">
@@ -67,7 +67,7 @@ export function XPBar({ totalXP, nextLevelThreshold, playerLevel, variant = "ful
           {totalXP}/{nextLevelThreshold} XP
         </span>
       </div>
-      <div className="h-2.5 w-32 overflow-hidden rounded-full bg-ocean-200">
+      <div className="h-2.5 w-40 overflow-hidden rounded-full bg-ocean-200">
         <div
           className="h-full bg-gradient-to-r from-gold-400 to-gold-600 transition-all duration-500"
           style={{ width: `${progress}%` }}

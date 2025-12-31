@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ActionSprite, BLOCK_TO_ACTION, isActionBlock } from "@/components/jorc/action-sprite"
 
 export type BlockVariant = "palette" | "code" | "running"
 
@@ -195,7 +196,8 @@ export const Block = memo(function Block({
   // Determine shape from definition or infer from type
   const shape = definition.shape || inferShape(definition.type)
 
-  // Get icon component
+  // Get icon component (or null for action blocks that use sprites)
+  const useSprite = isActionBlock(definition.type)
   const IconComponent = iconMap[definition.type] || iconMap[definition.category] || Package
 
   // Handlers
@@ -331,7 +333,16 @@ export const Block = memo(function Block({
                 clipPath: "polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%)",
               }}
             >
-              <IconComponent className="size-5 shrink-0" />
+              {useSprite ? (
+                <ActionSprite
+                  action={BLOCK_TO_ACTION[definition.type]}
+                  size={24}
+                  animate={variant === "running"}
+                  className="shrink-0"
+                />
+              ) : (
+                <IconComponent className="size-5 shrink-0" />
+              )}
               <span className="flex-1 truncate text-sm">{definition.label}</span>
               {renderParams()}
               {renderCodeActions()}
@@ -369,7 +380,16 @@ export const Block = memo(function Block({
                 textColor,
               )}
             >
-              <IconComponent className="size-5 shrink-0" />
+              {useSprite ? (
+                <ActionSprite
+                  action={BLOCK_TO_ACTION[definition.type]}
+                  size={24}
+                  animate={variant === "running"}
+                  className="shrink-0"
+                />
+              ) : (
+                <IconComponent className="size-5 shrink-0" />
+              )}
               <span className="flex-1 truncate text-sm font-medium">{definition.label}</span>
               {renderParams()}
               {renderCodeActions()}
@@ -430,7 +450,16 @@ export const Block = memo(function Block({
             aria-label={`Bloque sensor: ${definition.label}`}
             aria-disabled={disabled}
           >
-            <IconComponent className="size-5 shrink-0" />
+            {useSprite ? (
+              <ActionSprite
+                action={BLOCK_TO_ACTION[definition.type]}
+                size={24}
+                animate={variant === "running"}
+                className="shrink-0"
+              />
+            ) : (
+              <IconComponent className="size-5 shrink-0" />
+            )}
             <span className="flex-1 truncate text-sm">{definition.label}</span>
             {renderParams()}
             {renderCodeActions()}
@@ -456,7 +485,16 @@ export const Block = memo(function Block({
             aria-label={`Bloque de variable: ${definition.label}`}
             aria-disabled={disabled}
           >
-            <IconComponent className="size-5 shrink-0" />
+            {useSprite ? (
+              <ActionSprite
+                action={BLOCK_TO_ACTION[definition.type]}
+                size={24}
+                animate={variant === "running"}
+                className="shrink-0"
+              />
+            ) : (
+              <IconComponent className="size-5 shrink-0" />
+            )}
             <span className="flex-1 truncate text-sm">{definition.label}</span>
             {renderParams()}
             {renderCodeActions()}
@@ -484,7 +522,16 @@ export const Block = memo(function Block({
             aria-disabled={disabled}
           >
             {variant === "code" && <GripVertical className="size-4 shrink-0 cursor-grab opacity-50" />}
-            <IconComponent className="size-5 shrink-0" />
+            {useSprite ? (
+              <ActionSprite
+                action={BLOCK_TO_ACTION[definition.type]}
+                size={24}
+                animate={variant === "running"}
+                className="shrink-0"
+              />
+            ) : (
+              <IconComponent className="size-5 shrink-0" />
+            )}
             <span className="flex-1 truncate text-sm">{definition.label}</span>
             {renderParams()}
             {renderCodeActions()}

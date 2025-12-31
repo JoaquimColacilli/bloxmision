@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Anchor, X, Package, Code2 } from "lucide-react"
+import { Anchor, X, Package, Code2, Compass } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { XPBar } from "@/components/header/xp-bar"
 import { useAuth } from "@/contexts/auth-context"
@@ -51,11 +51,19 @@ export function GameLayout({
           />
         )}
 
-        <Link href="/">
-          <Button variant="ghost" size="icon" className="size-8" aria-label="Volver al inicio">
-            <X className="size-4" />
-          </Button>
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link href="/worlds">
+            <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-ocean-600 hover:text-ocean-800" aria-label="Volver a las islas">
+              <Compass className="size-4" />
+              <span className="hidden sm:inline">Islas</span>
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button variant="ghost" size="icon" className="size-8" aria-label="Volver al inicio">
+              <X className="size-4" />
+            </Button>
+          </Link>
+        </div>
       </header>
 
       {/* Main Content Area */}

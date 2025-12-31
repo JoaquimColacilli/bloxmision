@@ -1,11 +1,13 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Compass, Map, User, Ship, Anchor, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ProgressCard } from "./progress-card"
+import { getUserWorldsProgress, WORLD_DEFINITIONS, getMaxUnlockedLevelNum } from "@/src/lib/services/worldService"
 import type { User as UserType } from "@/lib/types"
 
 interface HomeProps {
@@ -47,7 +49,55 @@ function HomeError({ message, onRetry }: { message: string; onRetry?: () => void
 }
 
 export function Home({ user, loading, error, onRetry }: HomeProps) {
-  if (loading) {
+  const [nextLevelPath, setNextLevelPath] = useState<string>("/worlds")
+  const [loadingProgress, setLoadingProgress] = useState(false)
+
+  // Calculate the next level to play from the progress subcollection
+  useEffect(() => {
+    async function calculateNextLevel() {
+      if (!user) {
+        setNextLevelPath("/worlds")
+        return
+      }
+
+      setLoadingProgress(true)
+      try {
+        // Get all world progress from subcollection
+        const worldsProgress = await getUserWorldsProgress(user.id)
+
+        // Find the current world (first unlocked and incomplete)
+        const currentWorld = worldsProgress.find(w => w.isCurrent)
+
+        if (!currentWorld) {
+          // No current world, go to worlds selection
+          setNextLevelPath("/worlds")
+          return
+        }
+
+        // Get the world definition to find its numeric ID
+        const worldDef = WORLD_DEFINITIONS.find(w => w.id === currentWorld.worldId)
+        if (!worldDef) {
+          setNextLevelPath("/worlds")
+          return
+        }
+
+        // Get the next unlocked level in this world
+        const nextLevelNum = await getMaxUnlockedLevelNum(user.id, worldDef.numericId)
+
+        // Navigate to the next level
+        setNextLevelPath(`/play/${worldDef.numericId}-${nextLevelNum}`)
+      } catch (err) {
+        console.error("Error calculating next level:", err)
+        setNextLevelPath("/worlds")
+      } finally {
+        setLoadingProgress(false)
+      }
+    }
+
+    calculateNextLevel()
+  }, [user])
+
+  if (loading || loadingProgress) {
     return <HomeSkeleton />
   }
 
@@ -55,7 +105,7 @@ export function Home({ user, loading, error, onRetry }: HomeProps) {
     return <HomeError message={error} onRetry={onRetry} />
   }
 
-  const hasProgress = user && user.currentWorld && user.totalXP > 0
+  const hasProgress = user && user.totalXP > 0
   const isNewUser = user && !hasProgress
 
   return (
@@ -89,9 +139,8 @@ export function Home({ user, loading, error, onRetry }: HomeProps) {
           </p>
         </div>
 
-        {/* Primary CTA */}
         {user ? (
-          <Link href={hasProgress && user.currentLevelId ? `/play/${user.currentLevelId}` : "/worlds"}>
+          <Link href={hasProgress ? nextLevelPath : "/worlds"}>
             <Button
               size="lg"
               className="mt-2 gap-2 bg-gold-400 px-8 text-lg font-bold text-ocean-800 shadow-lg transition-all hover:bg-gold-600 hover:shadow-xl"

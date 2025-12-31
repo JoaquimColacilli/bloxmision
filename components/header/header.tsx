@@ -67,11 +67,11 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
         Saltar al contenido principal
       </a>
 
-      <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4">
+      <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4 relative">
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 text-ocean-800 transition-colors hover:text-ocean-600"
+          className="flex items-center gap-2 text-ocean-800 transition-colors hover:text-ocean-600 z-10"
           aria-label="BloxMision - Ir al inicio"
         >
           <div className="flex size-8 items-center justify-center rounded-full bg-ocean-500">
@@ -80,9 +80,9 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
           <span className="font-bold">BloxMision</span>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - Centered absolutely */}
         {user && !isMobile && (
-          <nav className="hidden items-center gap-6 md:flex" role="navigation" aria-label="Navegacion principal">
+          <nav className="hidden items-center gap-6 md:flex absolute left-1/2 -translate-x-1/2" role="navigation" aria-label="Navegacion principal">
             {navItems.map((item) => (
               <Link
                 key={item.href}

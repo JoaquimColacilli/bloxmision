@@ -37,9 +37,9 @@ const expressionColors: Record<JorcExpression, string> = {
 }
 
 const sizeConfig = {
-  small: { container: "size-16", sprite: "w-14 h-14", hat: "size-8" },
-  medium: { container: "size-24", sprite: "w-20 h-20", hat: "size-12" },
-  large: { container: "size-32", sprite: "w-28 h-28", hat: "size-16" },
+  small: { container: "size-16", sprite: "w-14 h-14" },
+  medium: { container: "size-24", sprite: "w-20 h-20" },
+  large: { container: "size-32", sprite: "w-28 h-28" },
 }
 
 export function JorcSprite({ expression = "neutral", size = "medium", className }: JorcSpriteProps) {
@@ -74,18 +74,7 @@ export function JorcSprite({ expression = "neutral", size = "medium", className 
           !prefersReducedMotion && "animate-breathe",
         )}
       >
-        {/* Pirate hat */}
-        <div
-          className={cn(
-            "absolute -top-2 left-1/2 -translate-x-1/2 rounded-t-lg bg-gray-900",
-            sizes.hat,
-            !prefersReducedMotion && "animate-sway",
-          )}
-          style={{ height: "40%", clipPath: "polygon(10% 100%, 50% 0%, 90% 100%)" }}
-        >
-          {/* Skull decoration */}
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs text-white">☠️</div>
-        </div>
+
 
         {/* JORC Sprite Image */}
         <img
