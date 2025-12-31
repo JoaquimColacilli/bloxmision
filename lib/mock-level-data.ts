@@ -239,8 +239,55 @@ export function getLevelConfig(levelId: string): LevelData {
     }
   }
 
-  // ========== WORLD 2 LEVELS (Bucles) - Fragment levels only ==========
+  // ========== WORLD 2 LEVELS (Remolinos de las Mareas - Night Theme + Krakens) ==========
 
+  // 2-1: Intro to night theme (4x4)
+  if (levelId === "2-1") {
+    return {
+      id: levelId,
+      title: "Aguas Nocturnas",
+      gridSize: { rows: 4, cols: 4 },
+      startPosition: { x: 0, y: 1, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 3, y: 1 } }],
+      obstacles: [],
+      collectibles: [],
+      availableBlocks: ["forward", "repeat"],
+      optimalSolution: { blockCount: 2 },
+      hints: ["Bienvenido a las aguas nocturnas. Usa Repetir para avanzar!"],
+    }
+  }
+
+  // 2-2: Forward + turns (4x4)
+  if (levelId === "2-2") {
+    return {
+      id: levelId,
+      title: "Corriente Marina",
+      gridSize: { rows: 4, cols: 4 },
+      startPosition: { x: 0, y: 0, facing: "south" },
+      objectives: [{ type: "reach", target: { x: 3, y: 3 } }],
+      obstacles: [],
+      collectibles: [{ id: "c1", x: 0, y: 2, type: "coin" }],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["La corriente te lleva hacia el sur y el este"],
+    }
+  }
+
+  // 2-3: First Kraken encounter (4x4)
+  if (levelId === "2-3") {
+    return {
+      id: levelId,
+      title: "Peligro en las Sombras",
+      gridSize: { rows: 4, cols: 4 },
+      startPosition: { x: 0, y: 1, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 3, y: 1 } }],
+      obstacles: [{ x: 2, y: 1, type: "kraken" }],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
+      hints: ["Cuidado con el Kraken! No lo toques o te atrapará."],
+    }
+  }
+
+  // 2-4: Fragment level - Repeat intro (5x5)
   if (levelId === "2-4") {
     return {
       id: levelId,
@@ -257,11 +304,71 @@ export function getLevelConfig(levelId: string): LevelData {
         fragmentId: "fragment-2-1",
         worldId: 2,
         fragmentNumber: 1,
-        description: "Primer fragmento de la Isla Bucles"
+        description: "Primer fragmento de la Isla Remolinos"
       },
     }
   }
 
+  // 2-5: Navigate around Krakens (5x5)
+  if (levelId === "2-5") {
+    return {
+      id: levelId,
+      title: "Esquivando Tentáculos",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 4, y: 4 } }],
+      obstacles: [
+        { x: 2, y: 0, type: "kraken" },
+        { x: 2, y: 2, type: "kraken" },
+      ],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
+      hints: ["Rodea a los Krakens por la izquierda o derecha"],
+    }
+  }
+
+  // 2-6: Repeat + turns pattern (5x5)
+  if (levelId === "2-6") {
+    return {
+      id: levelId,
+      title: "Patrón de las Mareas",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 4, y: 4 } },
+        { type: "collect", item: "coin", count: 2 },
+      ],
+      obstacles: [],
+      collectibles: [
+        { id: "c1", x: 2, y: 0, type: "coin" },
+        { id: "c2", x: 4, y: 2, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["Avanza, recoge, gira - busca el patrón"],
+    }
+  }
+
+  // 2-7: Multiple Krakens blocking paths (5x5)
+  if (levelId === "2-7") {
+    return {
+      id: levelId,
+      title: "Trampa del Kraken",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 2, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 4, y: 2 } }],
+      obstacles: [
+        { x: 1, y: 1, type: "kraken" },
+        { x: 1, y: 3, type: "kraken" },
+        { x: 3, y: 1, type: "kraken" },
+        { x: 3, y: 3, type: "kraken" },
+      ],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
+      hints: ["Solo hay un camino seguro - por el medio!"],
+    }
+  }
+
+  // 2-8: Fragment level - Repeat + turn patterns (6x6)
   if (levelId === "2-8") {
     return {
       id: levelId,
@@ -269,19 +376,90 @@ export function getLevelConfig(levelId: string): LevelData {
       gridSize: { rows: 6, cols: 6 },
       startPosition: { x: 0, y: 0, facing: "east" },
       objectives: [{ type: "reach", target: { x: 5, y: 5 } }],
-      obstacles: [],
+      obstacles: [{ x: 3, y: 3, type: "kraken" }],
       collectibles: [],
       availableBlocks: ["forward", "turn-right", "repeat"],
-      hints: ["Avanza y gira en un patrón repetible"],
+      hints: ["Avanza y gira en un patrón repetible, evita al Kraken"],
       treasureFragment: {
         fragmentId: "fragment-2-2",
         worldId: 2,
         fragmentNumber: 2,
-        description: "Segundo fragmento de la Isla Bucles"
+        description: "Segundo fragmento de la Isla Remolinos"
       },
     }
   }
 
+  // 2-9: Complex navigation (6x6)
+  if (levelId === "2-9") {
+    return {
+      id: levelId,
+      title: "Laberinto Oscuro",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 0, facing: "south" },
+      objectives: [
+        { type: "reach", target: { x: 5, y: 5 } },
+        { type: "collect", item: "coin", count: 2 },
+      ],
+      obstacles: [
+        { x: 1, y: 2, type: "kraken" },
+        { x: 4, y: 3, type: "kraken" },
+      ],
+      collectibles: [
+        { id: "c1", x: 2, y: 1, type: "coin" },
+        { id: "c2", x: 3, y: 4, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["Planifica tu ruta cuidadosamente en la oscuridad"],
+    }
+  }
+
+  // 2-10: Obstacle + Kraken combo (6x6)
+  if (levelId === "2-10") {
+    return {
+      id: levelId,
+      title: "Mareas Cambiantes",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 3, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 5, y: 3 } }],
+      obstacles: [
+        { x: 2, y: 2, type: "rock" },
+        { x: 2, y: 3, type: "kraken" },
+        { x: 2, y: 4, type: "rock" },
+        { x: 4, y: 2, type: "kraken" },
+        { x: 4, y: 4, type: "kraken" },
+      ],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
+      hints: ["Combina esquivar rocas y Krakens - sube o baja"],
+    }
+  }
+
+  // 2-11: Advanced patterns (7x7)
+  if (levelId === "2-11") {
+    return {
+      id: levelId,
+      title: "El Abismo",
+      gridSize: { rows: 7, cols: 7 },
+      startPosition: { x: 0, y: 3, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 6, y: 3 } },
+        { type: "collect", item: "coin", count: 3 },
+      ],
+      obstacles: [
+        { x: 2, y: 2, type: "kraken" },
+        { x: 4, y: 4, type: "kraken" },
+      ],
+      collectibles: [
+        { id: "c1", x: 1, y: 1, type: "coin" },
+        { id: "c2", x: 3, y: 3, type: "coin" },
+        { id: "c3", x: 5, y: 5, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["Sigue la diagonal de monedas, cuidado con los Krakens"],
+    }
+  }
+
+  // 2-12: Fragment level - Final challenge (7x7)
   if (levelId === "2-12") {
     return {
       id: levelId,
@@ -292,7 +470,11 @@ export function getLevelConfig(levelId: string): LevelData {
         { type: "reach", target: { x: 6, y: 6 } },
         { type: "collect", item: "coin", count: 4 },
       ],
-      obstacles: [],
+      obstacles: [
+        { x: 2, y: 1, type: "kraken" },
+        { x: 4, y: 3, type: "kraken" },
+        { x: 1, y: 5, type: "kraken" },
+      ],
       collectibles: [
         { id: "c1", x: 2, y: 0, type: "coin" },
         { id: "c2", x: 4, y: 2, type: "coin" },
@@ -300,12 +482,12 @@ export function getLevelConfig(levelId: string): LevelData {
         { id: "c4", x: 4, y: 6, type: "coin" },
       ],
       availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
-      hints: ["Encuentra el patrón en las monedas"],
+      hints: ["Encuentra el patrón en las monedas, evita los Krakens"],
       treasureFragment: {
         fragmentId: "fragment-2-3",
         worldId: 2,
         fragmentNumber: 3,
-        description: "Tercer fragmento de la Isla Bucles"
+        description: "Tercer fragmento de la Isla Remolinos"
       },
     }
   }
@@ -550,6 +732,259 @@ export function getLevelConfig(levelId: string): LevelData {
         worldId: 5,
         fragmentNumber: 3,
         description: "¡Fragmento final! El Mapa del Tesoro está completo"
+      },
+    }
+  }
+
+  // ========== WORLD 2 LEVELS (Remolinos de las Mareas - Night Theme + Krakens) ==========
+
+  // 2-1: Intro to night theme (4x4)
+  if (levelId === "2-1") {
+    return {
+      id: levelId,
+      title: "Aguas Nocturnas",
+      gridSize: { rows: 4, cols: 4 },
+      startPosition: { x: 0, y: 1, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 3, y: 1 } }],
+      obstacles: [],
+      collectibles: [],
+      availableBlocks: ["forward", "repeat"],
+      optimalSolution: { blockCount: 2 },
+      hints: ["Bienvenido a las aguas nocturnas. Usa Repetir para avanzar!"],
+    }
+  }
+
+  // 2-2: Forward + turns (4x4)
+  if (levelId === "2-2") {
+    return {
+      id: levelId,
+      title: "Corriente Marina",
+      gridSize: { rows: 4, cols: 4 },
+      startPosition: { x: 0, y: 0, facing: "south" },
+      objectives: [{ type: "reach", target: { x: 3, y: 3 } }],
+      obstacles: [],
+      collectibles: [{ id: "c1", x: 0, y: 2, type: "coin" }],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["La corriente te lleva hacia el sur y el este"],
+    }
+  }
+
+  // 2-3: First Kraken encounter (4x4)
+  if (levelId === "2-3") {
+    return {
+      id: levelId,
+      title: "Peligro en las Sombras",
+      gridSize: { rows: 4, cols: 4 },
+      startPosition: { x: 0, y: 1, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 3, y: 1 } }],
+      obstacles: [{ x: 2, y: 1, type: "kraken" }],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
+      hints: ["Cuidado con el Kraken! No lo toques o te atrapará."],
+    }
+  }
+
+  // 2-4: Fragment level - Repeat intro (5x5)
+  if (levelId === "2-4") {
+    return {
+      id: levelId,
+      title: "Bucle Simple",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 2, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 4, y: 2 } }],
+      obstacles: [],
+      collectibles: [],
+      availableBlocks: ["forward", "repeat"],
+      optimalSolution: { blockCount: 2 },
+      hints: ["Usa el bloque Repetir para avanzar 4 veces"],
+      treasureFragment: {
+        fragmentId: "fragment-2-1",
+        worldId: 2,
+        fragmentNumber: 1,
+        description: "Primer fragmento de la Isla Remolinos"
+      },
+    }
+  }
+
+  // 2-5: Navigate around Krakens (5x5)
+  if (levelId === "2-5") {
+    return {
+      id: levelId,
+      title: "Esquivando Tentáculos",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 4, y: 4 } }],
+      obstacles: [
+        { x: 2, y: 0, type: "kraken" },
+        { x: 2, y: 2, type: "kraken" },
+      ],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
+      hints: ["Rodea a los Krakens por la izquierda o derecha"],
+    }
+  }
+
+  // 2-6: Repeat + turns pattern (5x5)
+  if (levelId === "2-6") {
+    return {
+      id: levelId,
+      title: "Patrón de las Mareas",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 4, y: 4 } },
+        { type: "collect", item: "coin", count: 2 },
+      ],
+      obstacles: [],
+      collectibles: [
+        { id: "c1", x: 2, y: 0, type: "coin" },
+        { id: "c2", x: 4, y: 2, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["Avanza, recoge, gira - busca el patrón"],
+    }
+  }
+
+  // 2-7: Multiple Krakens blocking paths (5x5)
+  if (levelId === "2-7") {
+    return {
+      id: levelId,
+      title: "Trampa del Kraken",
+      gridSize: { rows: 5, cols: 5 },
+      startPosition: { x: 0, y: 2, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 4, y: 2 } }],
+      obstacles: [
+        { x: 1, y: 1, type: "kraken" },
+        { x: 1, y: 3, type: "kraken" },
+        { x: 3, y: 1, type: "kraken" },
+        { x: 3, y: 3, type: "kraken" },
+      ],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
+      hints: ["Solo hay un camino seguro - por el medio!"],
+    }
+  }
+
+  // 2-8: Fragment level - Repeat + turn patterns (6x6)
+  if (levelId === "2-8") {
+    return {
+      id: levelId,
+      title: "Bucle con Giros",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 5, y: 5 } }],
+      obstacles: [{ x: 3, y: 3, type: "kraken" }],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "repeat"],
+      hints: ["Avanza y gira en un patrón repetible, evita al Kraken"],
+      treasureFragment: {
+        fragmentId: "fragment-2-2",
+        worldId: 2,
+        fragmentNumber: 2,
+        description: "Segundo fragmento de la Isla Remolinos"
+      },
+    }
+  }
+
+  // 2-9: Complex navigation (6x6)
+  if (levelId === "2-9") {
+    return {
+      id: levelId,
+      title: "Laberinto Oscuro",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 0, facing: "south" },
+      objectives: [
+        { type: "reach", target: { x: 5, y: 5 } },
+        { type: "collect", item: "coin", count: 2 },
+      ],
+      obstacles: [
+        { x: 1, y: 2, type: "kraken" },
+        { x: 4, y: 3, type: "kraken" },
+      ],
+      collectibles: [
+        { id: "c1", x: 2, y: 1, type: "coin" },
+        { id: "c2", x: 3, y: 4, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["Planifica tu ruta cuidadosamente en la oscuridad"],
+    }
+  }
+
+  // 2-10: Obstacle + Kraken combo (6x6)
+  if (levelId === "2-10") {
+    return {
+      id: levelId,
+      title: "Mareas Cambiantes",
+      gridSize: { rows: 6, cols: 6 },
+      startPosition: { x: 0, y: 3, facing: "east" },
+      objectives: [{ type: "reach", target: { x: 5, y: 3 } }],
+      obstacles: [
+        { x: 2, y: 2, type: "rock" },
+        { x: 2, y: 3, type: "kraken" },
+        { x: 2, y: 4, type: "rock" },
+        { x: 4, y: 2, type: "kraken" },
+        { x: 4, y: 4, type: "kraken" },
+      ],
+      collectibles: [],
+      availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
+      hints: ["Combina esquivar rocas y Krakens - sube o baja"],
+    }
+  }
+
+  // 2-11: Advanced patterns (7x7)
+  if (levelId === "2-11") {
+    return {
+      id: levelId,
+      title: "El Abismo",
+      gridSize: { rows: 7, cols: 7 },
+      startPosition: { x: 0, y: 3, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 6, y: 3 } },
+        { type: "collect", item: "coin", count: 3 },
+      ],
+      obstacles: [
+        { x: 2, y: 2, type: "kraken" },
+        { x: 4, y: 4, type: "kraken" },
+      ],
+      collectibles: [
+        { id: "c1", x: 1, y: 1, type: "coin" },
+        { id: "c2", x: 3, y: 3, type: "coin" },
+        { id: "c3", x: 5, y: 5, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["Sigue la diagonal de monedas, cuidado con los Krakens"],
+    }
+  }
+
+  // 2-12: Fragment level - Final challenge (7x7)
+  if (levelId === "2-12") {
+    return {
+      id: levelId,
+      title: "Maestro del Bucle",
+      gridSize: { rows: 7, cols: 7 },
+      startPosition: { x: 0, y: 0, facing: "east" },
+      objectives: [
+        { type: "reach", target: { x: 6, y: 6 } },
+        { type: "collect", item: "coin", count: 4 },
+      ],
+      obstacles: [
+        { x: 2, y: 1, type: "kraken" },
+        { x: 4, y: 3, type: "kraken" },
+        { x: 1, y: 5, type: "kraken" },
+      ],
+      collectibles: [
+        { id: "c1", x: 2, y: 0, type: "coin" },
+        { id: "c2", x: 4, y: 2, type: "coin" },
+        { id: "c3", x: 2, y: 4, type: "coin" },
+        { id: "c4", x: 4, y: 6, type: "coin" },
+      ],
+      availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+      hints: ["Encuentra el patrón en las monedas, evita los Krakens"],
+      treasureFragment: {
+        fragmentId: "fragment-2-3",
+        worldId: 2,
+        fragmentNumber: 3,
+        description: "Tercer fragmento de la Isla Remolinos"
       },
     }
   }

@@ -53,7 +53,7 @@ export interface Settings {
 }
 
 export type TileType = "water" | "sand" | "grass" | "rock" | "wood"
-export type EntityType = "jorc" | "rock" | "tree" | "wall" | "chest" | "coin" | "gem" | "lever" | "door" | "bridge"
+export type EntityType = "jorc" | "rock" | "tree" | "wall" | "chest" | "coin" | "gem" | "lever" | "door" | "bridge" | "kraken"
 export type Direction = "north" | "south" | "east" | "west"
 
 export interface Tile {

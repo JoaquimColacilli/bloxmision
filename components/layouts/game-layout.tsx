@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Anchor, X, Package, Code2, Compass } from "lucide-react"
+import Image from "next/image"
+import { X, Package, Code2, Compass } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { XPBar } from "@/components/header/xp-bar"
 import { useAuth } from "@/contexts/auth-context"
@@ -36,9 +37,7 @@ export function GameLayout({
       {/* Compact Header */}
       <header className="flex h-12 items-center justify-between border-b border-ocean-200 bg-sand-50 px-4">
         <Link href="/" className="flex items-center gap-2 text-ocean-800">
-          <div className="flex size-6 items-center justify-center rounded-full bg-ocean-500">
-            <Anchor className="size-3 text-gold-400" />
-          </div>
+          <Image src="/BM_LOGO.png" alt="BloxMision" width={24} height={24} className="rounded" />
           <span className="text-sm font-bold">BloxMision</span>
         </Link>
 

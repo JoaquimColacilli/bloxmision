@@ -205,7 +205,7 @@ export function TreasureMap({
           <JorcPanel
             message={getJorcMessage()}
             mood={isComplete ? "success" : unlockedCount === 0 ? "intro" : "neutral"}
-            expression={isComplete ? "celebrating" : unlockedCount === 0 ? "happy" : "thinking"}
+            expression={isComplete ? "celebrating" : "happy"}
           />
         </div>
       </div>

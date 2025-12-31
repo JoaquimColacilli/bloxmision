@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Anchor, Menu } from "lucide-react"
+import Image from "next/image"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -74,9 +75,7 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
           className="flex items-center gap-2 text-ocean-800 transition-colors hover:text-ocean-600 z-10"
           aria-label="BloxMision - Ir al inicio"
         >
-          <div className="flex size-8 items-center justify-center rounded-full bg-ocean-500">
-            <Anchor className="size-4 text-gold-400" />
-          </div>
+          <Image src="/BM_LOGO.png" alt="BloxMision" width={32} height={32} className="rounded" />
           <span className="font-bold">BloxMision</span>
         </Link>
 
@@ -136,9 +135,7 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
                   <SheetContent side="left" className="w-72 bg-sand-50">
                     <SheetHeader>
                       <SheetTitle className="flex items-center gap-2 text-ocean-800">
-                        <div className="flex size-8 items-center justify-center rounded-full bg-ocean-500">
-                          <Anchor className="size-4 text-gold-400" />
-                        </div>
+                        <Image src="/BM_LOGO.png" alt="BloxMision" width={32} height={32} className="rounded" />
                         BloxMision
                       </SheetTitle>
                     </SheetHeader>

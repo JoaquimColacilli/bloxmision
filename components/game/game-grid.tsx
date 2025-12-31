@@ -20,6 +20,7 @@ interface GameGridProps {
   onRetry?: () => void
   className?: string
   showCoordinates?: boolean
+  theme?: "default" | "night"
 }
 
 function getPathDirection(current: PathStep, next?: PathStep): Direction | undefined {
@@ -41,6 +42,7 @@ export function GameGrid({
   onRetry,
   className,
   showCoordinates = true,
+  theme = "default",
 }: GameGridProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [cellSize, setCellSize] = useState(48)
@@ -115,6 +117,7 @@ export function GameGrid({
             pathDirection={pathDirection}
             onClick={onCellClick}
             cellSize={cellSize}
+            theme={theme}
           />,
         )
       }

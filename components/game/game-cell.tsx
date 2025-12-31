@@ -6,6 +6,8 @@ import { memo } from "react"
 import type { TileType, Entity, Direction } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
+export type GameTheme = "default" | "night"
+
 interface GameCellProps {
   x: number
   y: number
@@ -15,14 +17,30 @@ interface GameCellProps {
   pathDirection?: Direction
   onClick?: (x: number, y: number) => void
   cellSize: number
+  theme?: GameTheme
 }
 
-const tileStyles: Record<TileType, string> = {
-  water: "bg-blue-400",
-  sand: "bg-amber-200",
-  grass: "bg-green-400",
-  rock: "bg-stone-400",
-  wood: "bg-amber-600",
+const tileStyles: Record<TileType, Record<GameTheme, string>> = {
+  water: {
+    default: "bg-blue-400",
+    night: "bg-blue-900",
+  },
+  sand: {
+    default: "bg-amber-200",
+    night: "bg-amber-900/60",
+  },
+  grass: {
+    default: "bg-green-400",
+    night: "bg-green-900",
+  },
+  rock: {
+    default: "bg-stone-400",
+    night: "bg-stone-700",
+  },
+  wood: {
+    default: "bg-amber-600",
+    night: "bg-amber-800",
+  },
 }
 
 const entityIcons: Record<string, string> = {
@@ -52,6 +70,15 @@ const boatSprites: Record<Direction, string> = {
   west: "/sprites/boat_raw/frame-08.png",
 }
 
+// Sprites del Kraken según la dirección de ataque (idle por defecto)
+const krakenSprites: Record<Direction | "idle", string> = {
+  idle: "/sprites/kraken/idle.png",
+  north: "/sprites/kraken/attack-up.png",
+  east: "/sprites/kraken/attack-right.png",
+  south: "/sprites/kraken/attack-down.png",
+  west: "/sprites/kraken/attack-left.png",
+}
+
 function GameCellComponent({
   x,
   y,
@@ -61,6 +88,7 @@ function GameCellComponent({
   pathDirection,
   onClick,
   cellSize,
+  theme = "default",
 }: GameCellProps) {
   const handleClick = () => onClick?.(x, y)
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -70,6 +98,8 @@ function GameCellComponent({
     }
   }
 
+  const tileStyle = tileStyles[tileType]?.[theme] || tileStyles[tileType]?.default || "bg-blue-400"
+
   return (
     <div
       role="gridcell"
@@ -78,19 +108,29 @@ function GameCellComponent({
       onKeyDown={handleKeyDown}
       aria-label={`Celda ${x},${y}: ${tileType}${entity ? `, contiene ${entity.type}` : ""}`}
       className={cn(
-        "relative flex items-center justify-center border border-black/10 transition-all",
-        tileStyles[tileType],
+        "relative flex items-center justify-center border transition-all",
+        tileStyle,
+        theme === "night" ? "border-cyan-900/50" : "border-black/10",
         onClick &&
         "cursor-pointer hover:brightness-110 focus:ring-2 focus:ring-gold-400 focus:ring-offset-1 focus:outline-none",
-        isPath && "ring-2 ring-inset ring-gold-400/60",
+        isPath && (theme === "night" ? "ring-2 ring-inset ring-cyan-400/60" : "ring-2 ring-inset ring-gold-400/60"),
       )}
       style={{ width: cellSize, height: cellSize }}
     >
+      {/* Night theme stars effect */}
+      {theme === "night" && Math.random() > 0.85 && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute w-0.5 h-0.5 bg-white/40 rounded-full" style={{ top: '20%', left: '30%' }} />
+          <div className="absolute w-0.5 h-0.5 bg-white/30 rounded-full" style={{ top: '60%', left: '70%' }} />
+        </div>
+      )}
+
       {/* Path direction indicator */}
       {isPath && pathDirection && (
         <div
           className={cn(
-            "absolute inset-0 flex items-center justify-center text-gold-500/70 pointer-events-none",
+            "absolute inset-0 flex items-center justify-center pointer-events-none",
+            theme === "night" ? "text-cyan-400/70" : "text-gold-500/70",
             directionRotation[pathDirection],
           )}
           aria-hidden="true"
@@ -101,8 +141,23 @@ function GameCellComponent({
         </div>
       )}
 
-      {/* Entity rendering */}
-      {entity && entity.type !== "jorc" && !entity.collected && (
+      {/* Kraken rendering */}
+      {entity?.type === "kraken" && (
+        <div
+          className="absolute inset-0 flex items-center justify-center animate-pulse"
+          aria-label="Kraken - Peligroso!"
+        >
+          <img
+            src={krakenSprites.idle}
+            alt="Kraken"
+            className="w-[95%] h-[95%] object-contain drop-shadow-lg"
+            style={{ imageRendering: "pixelated" }}
+          />
+        </div>
+      )}
+
+      {/* Entity rendering (non-Kraken, non-Jorc) */}
+      {entity && entity.type !== "jorc" && entity.type !== "kraken" && !entity.collected && (
         <span
           className="text-[60%] sm:text-[70%] drop-shadow-sm select-none"
           style={{ fontSize: cellSize * 0.5 }}
@@ -131,3 +186,4 @@ function GameCellComponent({
 }
 
 export const GameCell = memo(GameCellComponent)
+

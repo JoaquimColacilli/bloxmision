@@ -167,6 +167,16 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
               } as ExecutionError
             }
 
+            // Check specifically for Kraken collision causing immediate failure
+            const isKraken = obstacles.some((o) => o.x === newX && o.y === newY && o.type === "kraken")
+            if (isKraken) {
+              throw {
+                type: "collision",
+                message: "¡El Kraken te atrapó!",
+                blockIndex,
+              } as ExecutionError
+            }
+
             if (hasObstacle(newX, newY, newState)) {
               throw {
                 type: "collision",
@@ -210,6 +220,16 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
               throw {
                 type: "out_of_bounds",
                 message: "Jorc salio del mapa retrocediendo!",
+                blockIndex,
+              } as ExecutionError
+            }
+
+            // Check specifically for Kraken collision causing immediate failure
+            const isKraken = obstacles.some((o) => o.x === newX && o.y === newY && o.type === "kraken")
+            if (isKraken) {
+              throw {
+                type: "collision",
+                message: "¡El Kraken te atrapó!",
                 blockIndex,
               } as ExecutionError
             }
