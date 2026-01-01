@@ -24,6 +24,7 @@ interface CodeAreaProps {
   blocks: BlockInstance[]
   onAddBlock: (block: BlockDefinition, index?: number) => void
   onAddBlockInside?: (parentInstanceId: string, block: BlockDefinition, sourceInstanceId?: string) => void
+  onRemoveBlockChild?: (parentInstanceId: string, childInstanceId: string) => void
   onReorder: (fromIndex: number, toIndex: number) => void
   onRemoveBlock: (index: number) => void
   onDuplicateBlock: (index: number) => void
@@ -39,6 +40,7 @@ export const CodeArea = memo(function CodeArea({
   blocks,
   onAddBlock,
   onAddBlockInside,
+  onRemoveBlockChild,
   onReorder,
   onRemoveBlock,
   onDuplicateBlock,
@@ -230,22 +232,56 @@ export const CodeArea = memo(function CodeArea({
 
   const handleDuplicate = useCallback(
     (instanceId: string) => {
+      // First check top-level blocks
       const index = blocks.findIndex((b) => b.instanceId === instanceId)
       if (index !== -1) {
         onDuplicateBlock(index)
+        return
+      }
+
+      // Otherwise, check inside children of loop blocks - need to handle via onAddBlockInside
+      // For children, we find the parent and duplicate within its children
+      for (const block of blocks) {
+        if (block.children) {
+          const childIndex = block.children.findIndex(c => c.instanceId === instanceId)
+          if (childIndex !== -1) {
+            const childToDupe = block.children[childIndex]
+            // Add a copy of this child into the same parent
+            if (onAddBlockInside) {
+              onAddBlockInside(block.instanceId, childToDupe.definition)
+            }
+            return
+          }
+        }
       }
     },
-    [blocks, onDuplicateBlock],
+    [blocks, onDuplicateBlock, onAddBlockInside],
   )
 
   const handleDelete = useCallback(
     (instanceId: string) => {
+      // First check top-level blocks
       const index = blocks.findIndex((b) => b.instanceId === instanceId)
       if (index !== -1) {
         onRemoveBlock(index)
+        return
+      }
+
+      // Otherwise, check inside children of loop blocks
+      for (const block of blocks) {
+        if (block.children) {
+          const childIndex = block.children.findIndex(c => c.instanceId === instanceId)
+          if (childIndex !== -1) {
+            // Found child - use dedicated callback to remove it
+            if (onRemoveBlockChild) {
+              onRemoveBlockChild(block.instanceId, instanceId)
+            }
+            return
+          }
+        }
       }
     },
-    [blocks, onRemoveBlock],
+    [blocks, onRemoveBlock, onRemoveBlockChild],
   )
 
   // Handle drop inside a loop block

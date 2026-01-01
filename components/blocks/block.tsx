@@ -242,7 +242,7 @@ export const Block = memo(function Block({
       e.preventDefault()
       e.stopPropagation()
       if (disabled || !instanceId) return
-      e.dataTransfer.dropEffect = "copy"
+      e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed === "move" ? "move" : "copy"
       setIsLoopDragOver(true)
     },
     [disabled, instanceId],
@@ -250,6 +250,11 @@ export const Block = memo(function Block({
 
   const handleLoopDragLeave = useCallback((e: React.DragEvent) => {
     e.stopPropagation()
+    // More robust check: only clear if effectively leaving the container
+    // However, for nested structures, sometimes simpler is better or use a ref timeout
+    // But adding min-w-0 usually fixes layout which might help hit testing
+
+    // Original check
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setIsLoopDragOver(false)
     }
@@ -343,7 +348,7 @@ export const Block = memo(function Block({
               ) : (
                 <IconComponent className="size-5 shrink-0" />
               )}
-              <span className="flex-1 truncate text-sm">{definition.label}</span>
+              <span className="flex-1 truncate text-sm font-medium min-w-[30px]">{definition.label}</span>
               {renderParams()}
               {renderCodeActions()}
             </div>
@@ -390,7 +395,7 @@ export const Block = memo(function Block({
               ) : (
                 <IconComponent className="size-5 shrink-0" />
               )}
-              <span className="flex-1 truncate text-sm font-medium">{definition.label}</span>
+              <span className="flex-1 truncate text-sm font-medium min-w-[30px]">{definition.label}</span>
               {renderParams()}
               {renderCodeActions()}
             </div>
@@ -400,29 +405,33 @@ export const Block = memo(function Block({
               <div className={cn(bgColor, bdColor, "w-4 shrink-0 border-l-2 border-r-0")} />
               <div
                 className={cn(
-                  "min-h-[40px] flex-1 overflow-hidden rounded-sm p-2 transition-colors",
-                  isLoopDragOver ? "bg-gold-200/50" : "bg-black/10",
+                  "min-h-[48px] flex-1 min-w-0 overflow-visible rounded-sm p-2 transition-colors",
+                  isLoopDragOver ? "bg-gold-200/60" : "bg-black/10",
                 )}
-                onDragOver={variant === "code" ? handleLoopDragOver : undefined}
-                onDragLeave={variant === "code" ? handleLoopDragLeave : undefined}
-                onDrop={variant === "code" ? handleLoopDrop : undefined}
               >
-                {children ? (
-                  <div className="flex flex-col gap-1">
-                    {children}
-                  </div>
-                ) : (
+                <div className="flex flex-col gap-1">
+                  {/* Render existing children */}
+                  {children && (
+                    <div className={cn(isLoopDragOver && "pointer-events-none")}>
+                      {children}
+                    </div>
+                  )}
+                  {/* Always show drop zone for adding more blocks */}
                   <div
                     className={cn(
-                      "flex h-full min-h-[24px] items-center justify-center rounded border-2 border-dashed text-xs font-medium transition-colors",
+                      "flex min-h-[40px] items-center justify-center rounded-lg border-2 border-dashed text-sm font-medium transition-all cursor-copy",
                       isLoopDragOver
-                        ? "border-gold-500 bg-gold-100 text-gold-700"
-                        : "border-ocean-400 bg-ocean-100/50 text-ocean-600",
+                        ? "border-gold-500 bg-gold-100 text-gold-700 scale-105"
+                        : "border-ocean-400/60 bg-ocean-100/40 text-ocean-600 hover:border-ocean-500 hover:bg-ocean-100/60",
                     )}
+                    onDragOver={variant === "code" ? handleLoopDragOver : undefined}
+                    onDragEnter={variant === "code" ? handleLoopDragOver : undefined}
+                    onDragLeave={variant === "code" ? handleLoopDragLeave : undefined}
+                    onDrop={variant === "code" ? handleLoopDrop : undefined}
                   >
-                    {isLoopDragOver ? "Suelta aquí" : "Arrastra bloques aquí"}
+                    {isLoopDragOver ? "⬇ Suelta aquí ⬇" : (children ? "Suelta más bloques aquí" : "Arrastra bloques aquí")}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
@@ -460,7 +469,7 @@ export const Block = memo(function Block({
             ) : (
               <IconComponent className="size-5 shrink-0" />
             )}
-            <span className="flex-1 truncate text-sm">{definition.label}</span>
+            <span className="flex-1 truncate text-sm min-w-[30px]">{definition.label}</span>
             {renderParams()}
             {renderCodeActions()}
           </div>
@@ -495,7 +504,7 @@ export const Block = memo(function Block({
             ) : (
               <IconComponent className="size-5 shrink-0" />
             )}
-            <span className="flex-1 truncate text-sm">{definition.label}</span>
+            <span className="flex-1 truncate text-sm min-w-[30px]">{definition.label}</span>
             {renderParams()}
             {renderCodeActions()}
           </div>
@@ -532,7 +541,7 @@ export const Block = memo(function Block({
             ) : (
               <IconComponent className="size-5 shrink-0" />
             )}
-            <span className="flex-1 truncate text-sm">{definition.label}</span>
+            <span className="flex-1 truncate text-sm min-w-[30px]">{definition.label}</span>
             {renderParams()}
             {renderCodeActions()}
           </div>
@@ -562,22 +571,22 @@ export const Block = memo(function Block({
     )
   }
 
-  // Render code variant action buttons
+  // Render code variant action buttons - inline, compact
   const renderCodeActions = () => {
     if (variant !== "code" || !instanceId || hideActions) return null
 
     return (
-      <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 [div:hover>&]:opacity-100">
+      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 [div:hover>&]:opacity-100 ml-auto">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation()
             onDuplicate?.(instanceId)
           }}
-          className="rounded p-1 hover:bg-white/20"
+          className="rounded p-0.5 hover:bg-white/30"
           aria-label="Duplicar bloque"
         >
-          <Copy className="size-3.5" />
+          <Copy className="size-3" />
         </button>
         <button
           type="button"
@@ -585,10 +594,10 @@ export const Block = memo(function Block({
             e.stopPropagation()
             onDelete?.(instanceId)
           }}
-          className="rounded p-1 hover:bg-white/20"
+          className="rounded p-0.5 hover:bg-white/30"
           aria-label="Eliminar bloque"
         >
-          <Trash2 className="size-3.5" />
+          <Trash2 className="size-3" />
         </button>
       </div>
     )

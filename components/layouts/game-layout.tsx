@@ -144,7 +144,7 @@ export function GameLayout({
         </div>
       ) : (
         // Desktop: Three-column layout (unchanged)
-        <div className="grid flex-1 grid-cols-[240px_1fr_280px] gap-2 overflow-hidden p-2">
+        <div className="grid flex-1 grid-cols-[240px_1fr_340px] gap-2 overflow-hidden p-2">
           {/* Left Sidebar - Block Palette */}
           <aside className="flex flex-col gap-2 overflow-hidden rounded-xl bg-sand-50 p-3" role="complementary">
             {sidebar || (

@@ -20,37 +20,37 @@ const moodConfig: Record<DialogueMood, { bg: string; border: string; text: strin
     bg: "bg-ocean-100",
     border: "border-ocean-300",
     text: "text-ocean-800",
-    icon: "🗺️",
+    icon: "",
   },
   hint: {
     bg: "bg-amber-50",
     border: "border-amber-300",
     text: "text-amber-800",
-    icon: "💡",
+    icon: "",
   },
   success: {
     bg: "bg-emerald-50",
     border: "border-emerald-300",
     text: "text-emerald-800",
-    icon: "🎉",
+    icon: "",
   },
   error: {
     bg: "bg-orange-50",
     border: "border-orange-300",
     text: "text-orange-800",
-    icon: "🧭",
+    icon: "",
   },
   optimal: {
     bg: "bg-gold-50",
     border: "border-gold-400",
     text: "text-gold-800",
-    icon: "⭐",
+    icon: "",
   },
   neutral: {
     bg: "bg-sand-100",
     border: "border-sand-300",
     text: "text-sand-800",
-    icon: "💬",
+    icon: "",
   },
 }
 

@@ -200,6 +200,7 @@ export interface ExecutionResult {
   completedObjectives: LevelObjective[]
   failedObjectives: LevelObjective[]
   isOptimal: boolean
+  executedBlockTypes: string[]  // Block IDs that were actually executed (runtime)
 }
 
 export interface LessonSection {

@@ -27,19 +27,76 @@ import type { JorcExpression } from "@/components/jorc/jorc-sprite"
 import type { DialogueMood } from "@/components/jorc/jorc-dialogue"
 import { getMockLevelData, getLevelConfig } from "@/lib/mock-level-data"
 import { getBlocksForLevel } from "@/lib/mock-blocks"
+import { getRequiredBlocksForLevel, getBlockLesson } from "@/lib/block-progression"
 import type { Entity, PathStep, BlockDefinition, BlockInstance, ExecutionResult } from "@/lib/types"
 
-const JORC_MESSAGES = {
-  intro:
-    "Ahoy, grumete! En este nivel vas a aprender a mover el barco por el mapa. Arrastra bloques al area de codigo y presiona Ejecutar!",
-  hint: "Hmm, probaste usar el bloque 'Avanzar' primero?",
-  success: "Fantastico trabajo, marinero! Esa secuencia fue perfecta. Encontramos otro fragmento del mapa!",
-  error:
-    "Vaya, parece que el barco se desvio un poco. No te preocupes, hasta los mejores navegantes necesitan ajustar el rumbo! Intentemos de nuevo.",
-  optimal:
-    "Increible! Resolviste el nivel con el codigo mas eficiente posible. Eres un verdadero genio de la programacion!",
-  running: "Hmm, veamos que hace tu codigo...",
-  objectives_failed: "Casi lo logras! Pero no completaste todos los objetivos. Revisa tu codigo.",
+// Mensajes dinámicos de JORC basados en el mundo y nivel
+const getJorcMessages = (worldId: string, levelNum: number) => {
+  const worldIntros: Record<string, string> = {
+    "1": "¡Ahoy, grumete! En esta isla vas a aprender los fundamentos de la navegación: avanzar, girar y recoger tesoros. ¡Arrastra bloques al área de código y presiona Ejecutar!",
+    "2": "¡Bienvenido a las Aguas Nocturnas! Aquí dominarás los bucles y aprenderás a esquivar los temibles Krakens. ¡Ten cuidado con las sombras!",
+    "3": "¡Navegante intrépido! En la Isla de las Decisiones aprenderás a tomar caminos inteligentes usando condicionales. ¡El barco decidirá qué hacer según lo que encuentre!",
+    "4": "¡Los mares de la Memoria te esperan! Aquí aprenderás a usar variables para recordar información importante durante tu travesía.",
+    "5": "¡Capitán experto! Has llegado a la Isla de las Funciones. Aprenderás a crear tus propios bloques reutilizables. ¡El tesoro final está cerca!",
+  }
+
+  const worldHints: Record<string, string> = {
+    "1": "¿Probaste usar los bloques 'Avanzar' y 'Girar'? Piensa en los pasos que el barco debe dar.",
+    "2": "¡Recuerda que los bucles te ahorran trabajo! Y cuidado con los Krakens...",
+    "3": "Usa 'Si está bloqueado' para que el barco tome decisiones automáticamente.",
+    "4": "Las variables te ayudan a recordar cuántas veces hiciste algo.",
+    "5": "Define una función con los pasos que se repiten y luego llámala cuando la necesites.",
+  }
+
+  const worldSuccess: Record<string, string> = {
+    "1": "¡Fantástico trabajo, marinero! Estás dominando la navegación básica.",
+    "2": "¡Excelente! Dominas los bucles y esquivaste a los Krakens como un verdadero capitán.",
+    "3": "¡Brillante! Tu barco toma decisiones inteligentes gracias a los condicionales.",
+    "4": "¡Impresionante! Usas las variables como un programador experto.",
+    "5": "¡Asombroso! Tus funciones hacen el código más elegante y reutilizable.",
+  }
+
+  // Mensajes especiales para ciertos niveles
+  let intro = worldIntros[worldId] || worldIntros["1"]
+
+  // Personalización adicional por nivel
+  if (levelNum > 1) {
+    const levelMessages: Record<string, Record<number, string>> = {
+      "1": {
+        4: "¡Es hora de aprender a recoger monedas! Usa el bloque 'Recoger' cuando estés sobre una moneda.",
+        7: "¡Las rocas bloquean el camino! Tendrás que rodearlas con giros.",
+        10: "¡Presentamos el bloque Repetir! Con él puedes ejecutar acciones varias veces sin escribir tanto código.",
+      },
+      "2": {
+        3: "¡Cuidado! Los Krakens son peligrosos. Si los tocas, te atraparán. Rodéalos con cuidado.",
+        8: "¡Los patrones son clave! Busca secuencias que se repitan para usar bucles eficientemente.",
+      },
+      "3": {
+        4: "¡Nuevo poder desbloqueado! 'Si está bloqueado' permite que el barco tome decisiones basadas en obstáculos.",
+      },
+      "4": {
+        4: "¡Las variables son como cofres de memoria! Guarda valores importantes para usarlos después.",
+      },
+      "5": {
+        4: "¡Define tu primera función! Agrupa comandos para reutilizarlos fácilmente.",
+        12: "¡El desafío final! Usa todas las habilidades que has aprendido para conseguir el tesoro.",
+      },
+    }
+
+    if (levelMessages[worldId]?.[levelNum]) {
+      intro = levelMessages[worldId][levelNum]
+    }
+  }
+
+  return {
+    intro,
+    hint: worldHints[worldId] || worldHints["1"],
+    success: worldSuccess[worldId] || worldSuccess["1"],
+    error: "Vaya, parece que el barco se desvió un poco. No te preocupes, hasta los mejores navegantes necesitan ajustar el rumbo. ¡Intentemos de nuevo!",
+    optimal: "¡Increíble! Resolviste el nivel con el código más eficiente posible. ¡Eres un verdadero genio de la programación!",
+    running: "Hmm, veamos qué hace tu código...",
+    objectives_failed: "¡Casi lo logras! Pero no completaste todos los objetivos. Revisa tu código.",
+  }
 }
 
 const ATTEMPTS_TO_UNLOCK = 2
@@ -56,7 +113,7 @@ export default function PlayPage() {
   const availableBlocks = useMemo(() => getBlocksForLevel(levelId), [levelId])
 
   const availableBlockIds = useMemo(() => availableBlocks.map((b) => b.id), [availableBlocks])
-  const newBlockIds = useNewBlocksForLevel(availableBlockIds)
+  const newBlockIds = useNewBlocksForLevel(levelId)  // Uses canonical progression to detect blocks introduced in THIS level
   const [showNewBlockIntro, setShowNewBlockIntro] = useState(false)
 
   // Level locking state
@@ -69,6 +126,9 @@ export default function PlayPage() {
     const parts = levelId.split('-')
     return [parts[0] || '1', parseInt(parts[1] || '1', 10)]
   }, [levelId])
+
+  // Mensajes de JORC personalizados por mundo y nivel
+  const jorcMessages = useMemo(() => getJorcMessages(worldNumericId, requestedLevelNum), [worldNumericId, requestedLevelNum])
 
   // XP Sync and Level Access Check on mount
   useEffect(() => {
@@ -142,7 +202,12 @@ export default function PlayPage() {
   // Jorc state
   const [jorcExpression, setJorcExpression] = useState<JorcExpression>("happy")
   const [jorcMood, setJorcMood] = useState<DialogueMood>("intro")
-  const [jorcMessage, setJorcMessage] = useState<string>(JORC_MESSAGES.intro)
+  const [jorcMessage, setJorcMessage] = useState<string>("")
+
+  // Inicializar mensaje de intro cuando cambia el nivel
+  useEffect(() => {
+    setJorcMessage(jorcMessages.intro)
+  }, [jorcMessages.intro])
 
   const [showTutorial, setShowTutorial] = useState(false)
 
@@ -331,13 +396,31 @@ export default function PlayPage() {
     [],
   )
 
+  // Handle removing a block from inside a loop block
+  const handleRemoveBlockChild = useCallback(
+    (parentInstanceId: string, childInstanceId: string) => {
+      setCodeBlocks((prev) =>
+        prev.map((block) => {
+          if (block.instanceId === parentInstanceId && block.children) {
+            return {
+              ...block,
+              children: block.children.filter((c) => c.instanceId !== childInstanceId),
+            }
+          }
+          return block
+        })
+      )
+    },
+    [],
+  )
+
   const handleClearAll = useCallback(() => {
     setCodeBlocks([])
     resetEngine()
     setJorcExpression("happy")
     setJorcMood("intro")
-    setJorcMessage(JORC_MESSAGES.intro)
-  }, [resetEngine])
+    setJorcMessage(jorcMessages.intro)
+  }, [resetEngine, jorcMessages.intro])
 
   const handleBlockSelect = useCallback(
     (block: BlockDefinition) => {
@@ -363,7 +446,7 @@ export default function PlayPage() {
     setAttemptsCount((prev) => prev + 1)
     setJorcExpression("thinking")
     setJorcMood("neutral")
-    setJorcMessage(JORC_MESSAGES.running)
+    setJorcMessage(jorcMessages.running)
 
     // Reset before executing
     resetEngine()
@@ -380,15 +463,33 @@ export default function PlayPage() {
 
     setExecutionResult(result)
 
+    // Check mandatory block usage for levels that introduce new blocks
+    const requiredBlocks = getRequiredBlocksForLevel(levelId)
+    const executedBlocks = result.executedBlockTypes || []
+    const missingBlocks = requiredBlocks.filter((blockId) => !executedBlocks.includes(blockId))
+
+    if (result.success && missingBlocks.length > 0) {
+      // User completed objectives but didn't use the required new block
+      const firstMissing = missingBlocks[0]
+      const lesson = getBlockLesson(firstMissing)
+      const blockName = lesson?.name || firstMissing
+
+      setJorcExpression("worried")
+      setJorcMood("error")
+      setJorcMessage(`¡Casi! Para pasar este nivel tenés que usar el bloque "${blockName}" al menos una vez.`)
+      setShowFailureModal(true)
+      return
+    }
+
     if (result.success) {
       if (result.isOptimal) {
         setJorcExpression("celebrating")
         setJorcMood("optimal")
-        setJorcMessage(JORC_MESSAGES.optimal)
+        setJorcMessage(jorcMessages.optimal)
       } else {
         setJorcExpression("celebrating")
         setJorcMood("success")
-        setJorcMessage(JORC_MESSAGES.success)
+        setJorcMessage(jorcMessages.success)
       }
       setShowSuccessModal(true)
     } else if (engineError) {
@@ -399,10 +500,10 @@ export default function PlayPage() {
     } else {
       setJorcExpression("worried")
       setJorcMood("error")
-      setJorcMessage(JORC_MESSAGES.objectives_failed)
+      setJorcMessage(jorcMessages.objectives_failed)
       setShowFailureModal(true)
     }
-  }, [codeBlocks, execute, resetEngine, engineError])
+  }, [codeBlocks, execute, resetEngine, engineError, jorcMessages, levelId])
 
   const handleStop = useCallback(() => {
     stop()
@@ -415,8 +516,8 @@ export default function PlayPage() {
     setIsHintModalOpen(true)
     setJorcExpression("thinking")
     setJorcMood("hint")
-    setJorcMessage(JORC_MESSAGES.hint)
-  }, [])
+    setJorcMessage(jorcMessages.hint)
+  }, [jorcMessages.hint])
 
   const handleNextHint = useCallback(() => {
     if (viewedHintIndex < (levelConfig.hints?.length || 0) - 1) {
@@ -545,6 +646,7 @@ export default function PlayPage() {
         blocks={codeBlocks}
         onAddBlock={handleAddBlock}
         onAddBlockInside={handleAddBlockInside}
+        onRemoveBlockChild={handleRemoveBlockChild}
         onReorder={handleReorder}
         onRemoveBlock={handleRemoveBlock}
         onDuplicateBlock={handleDuplicateBlock}
@@ -557,6 +659,15 @@ export default function PlayPage() {
     </div>
   )
 
+  // Get readable names for required blocks
+  const requiredBlockNames = useMemo(() => {
+    const requiredIds = getRequiredBlocksForLevel(levelId)
+    return requiredIds.map((id) => {
+      const lesson = getBlockLesson(id)
+      return lesson?.name || id
+    })
+  }, [levelId])
+
   const JorcPanelComponent = (
     <JorcPanel
       expression={jorcExpression}
@@ -568,6 +679,7 @@ export default function PlayPage() {
         levelId,
         objective: levelData.objective,
         attemptsCount,
+        requiredBlocks: requiredBlockNames,
       }}
     />
   )

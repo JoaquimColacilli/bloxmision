@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { memo } from "react"
+import { memo, useState, useEffect } from "react"
 import type { TileType, Entity, Direction } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -98,6 +98,33 @@ function GameCellComponent({
     }
   }
 
+  // Kraken animation state
+  const [krakenFrame, setKrakenFrame] = useState<keyof typeof krakenSprites>("idle")
+
+  useEffect(() => {
+    if (entity?.type !== "kraken") return
+
+    // Sequence: Idle -> Attack Up -> Idle -> Attack Right -> Idle -> Attack Down -> Idle -> Attack Left
+    const sequence: (keyof typeof krakenSprites)[] = ["idle", "north", "idle", "east", "idle", "south", "idle", "west"]
+    let index = 0
+
+    // Random start delay to desynchronize multiple krakens
+    const startDelay = Math.random() * 1000
+    let intervalId: NodeJS.Timeout
+
+    const timeoutId = setTimeout(() => {
+      intervalId = setInterval(() => {
+        index = (index + 1) % sequence.length
+        setKrakenFrame(sequence[index])
+      }, 600) // Change frame every 600ms
+    }, startDelay)
+
+    return () => {
+      clearTimeout(timeoutId)
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [entity?.type])
+
   const tileStyle = tileStyles[tileType]?.[theme] || tileStyles[tileType]?.default || "bg-blue-400"
 
   return (
@@ -144,13 +171,13 @@ function GameCellComponent({
       {/* Kraken rendering */}
       {entity?.type === "kraken" && (
         <div
-          className="absolute inset-0 flex items-center justify-center animate-pulse"
+          className="absolute inset-0 flex items-center justify-center"
           aria-label="Kraken - Peligroso!"
         >
           <img
-            src={krakenSprites.idle}
+            src={krakenSprites[krakenFrame]}
             alt="Kraken"
-            className="w-[95%] h-[95%] object-contain drop-shadow-lg"
+            className="w-[95%] h-[95%] object-contain drop-shadow-lg transition-transform duration-200"
             style={{ imageRendering: "pixelated" }}
           />
         </div>

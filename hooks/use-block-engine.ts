@@ -82,6 +82,7 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
 
   const abortedRef = useRef(false)
   const speedRef = useRef(initialSpeed)
+  const executedBlockTypesRef = useRef<Set<string>>(new Set())
 
   const initialGameState = useMemo<ExecutionGameState>(
     () => ({
@@ -144,6 +145,10 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
 
       setCurrentBlockIndex(blockIndex)
       await delay(BASE_DELAY)
+
+      // Track that this block type was actually executed (runtime, not just present)
+      const blockId = block.definition.id
+      executedBlockTypesRef.current.add(blockId)
 
       const newState = { ...state }
       const { type } = block.definition
@@ -507,6 +512,7 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
       if (blocks.length === 0) return null
 
       abortedRef.current = false
+      executedBlockTypesRef.current = new Set()  // Reset for new execution
       setIsRunning(true)
       setError(null)
       setCurrentBlockIndex(null)
@@ -549,6 +555,7 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
             completedObjectives: completed,
             failedObjectives: failed,
             isOptimal: false,
+            executedBlockTypes: Array.from(executedBlockTypesRef.current),
           }
         }
 
@@ -565,6 +572,7 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
           completedObjectives: completed,
           failedObjectives: failed,
           isOptimal,
+          executedBlockTypes: Array.from(executedBlockTypesRef.current),
         }
       } catch (err) {
         if ((err as Error).message === "Aborted") {
@@ -583,6 +591,7 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
           completedObjectives: [],
           failedObjectives: objectives,
           isOptimal: false,
+          executedBlockTypes: Array.from(executedBlockTypesRef.current),
         }
       }
     },

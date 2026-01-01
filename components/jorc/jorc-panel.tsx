@@ -21,6 +21,7 @@ interface JorcPanelProps {
     levelId: string
     objective: string
     attemptsCount: number
+    requiredBlocks?: string[]  // Block names that MUST be used to pass the level
   }
   className?: string
 }
@@ -88,6 +89,11 @@ export function JorcPanel({
           <div className="space-y-1 text-center">
             <h3 className="font-semibold text-ocean-800">Nivel {levelInfo.levelId}</h3>
             <p className="text-sm text-ocean-600">{levelInfo.objective}</p>
+            {levelInfo.requiredBlocks && levelInfo.requiredBlocks.length > 0 && (
+              <p className="text-sm font-medium text-orange-600">
+                ⚠️ Usá: {levelInfo.requiredBlocks.join(", ")}
+              </p>
+            )}
             <div className="text-xs text-ocean-500">Intentos: {levelInfo.attemptsCount}</div>
           </div>
         )}
