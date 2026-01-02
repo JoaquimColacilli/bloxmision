@@ -1,64 +1,81 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { MenuLayout } from "@/components/layouts/menu-layout"
 import { LevelGrid } from "@/components/worlds/level-grid"
 import { ProtectedRoute } from "@/components/auth/auth-guard"
 import { useAuth } from "@/contexts/auth-context"
-import { getWorldProgress, getUserLevelsForWorld, WORLD_DEFINITIONS, type LevelStatus } from "@/src/lib/services/worldService"
-import type { World, Level } from "@/lib/types"
-
+import { useProgress } from "@/contexts/progress-context"
+import { WORLD_DEFINITIONS, type LevelStatus } from "@/src/lib/services/worldService"
+import type { World } from "@/lib/types"
 
 export default function WorldPage() {
   const params = useParams()
   const worldId = params.worldId as string
   const router = useRouter()
   const { user } = useAuth()
+  const {
+    isWorldUnlocked,
+    getWorldCompletedCount,
+    getCurrentWorldId,
+    isLevelCompleted,
+    progressMap,
+    isLoading
+  } = useProgress()
 
-  const [world, setWorld] = useState<World | null>(null)
-  const [levels, setLevels] = useState<LevelStatus[]>([])
-  const [loading, setLoading] = useState(true)
+  // Compute world data from cached progress (no Firestore reads)
+  const world = useMemo((): World | null => {
+    const worldDef = WORLD_DEFINITIONS.find(w => w.id === worldId)
+    if (!worldDef) return null
 
-  useEffect(() => {
-    async function loadWorldData() {
-      if (!user) return
+    const currentWorldId = getCurrentWorldId()
 
-      try {
-        // Find world definition
-        const worldDef = WORLD_DEFINITIONS.find(w => w.id === worldId)
-        if (!worldDef) {
-          setLoading(false)
-          return
-        }
+    return {
+      id: worldDef.id,
+      name: worldDef.name,
+      description: worldDef.description,
+      concept: worldDef.concept,
+      totalLevels: worldDef.totalLevels,
+      completedLevels: getWorldCompletedCount(worldDef.id),
+      isUnlocked: isWorldUnlocked(worldDef.id),
+      isCurrent: worldDef.id === currentWorldId,
+    }
+  }, [worldId, isWorldUnlocked, getWorldCompletedCount, getCurrentWorldId])
 
-        // Get progress
-        const [worldProgress, levelsProgress] = await Promise.all([
-          getWorldProgress(user.id, worldId),
-          getUserLevelsForWorld(user.id, worldId)
-        ])
+  // Compute levels data from cached progress
+  const levels = useMemo((): LevelStatus[] => {
+    const worldDef = WORLD_DEFINITIONS.find(w => w.id === worldId)
+    if (!worldDef) return []
 
-        setWorld({
-          id: worldDef.id,
-          name: worldDef.name,
-          description: worldDef.description,
-          concept: worldDef.concept,
-          totalLevels: worldDef.totalLevels,
-          completedLevels: worldProgress?.completedLevels || 0,
-          isUnlocked: worldProgress?.isUnlocked ?? (worldDef.order === 1),
-          isCurrent: worldProgress?.isCurrent || false,
-        })
+    const levelsList: LevelStatus[] = []
+    let previousLevelCompleted = true
 
-        setLevels(levelsProgress)
-      } catch (error) {
-        console.error("Error loading world data:", error)
-      } finally {
-        setLoading(false)
-      }
+    for (let i = 1; i <= worldDef.totalLevels; i++) {
+      const levelId = `${worldDef.numericId}-${i}`
+      const progress = progressMap.get(levelId)
+      const completed = !!progress
+
+      const isUnlocked = i === 1 || previousLevelCompleted
+      const isCurrent = isUnlocked && !completed && previousLevelCompleted
+
+      levelsList.push({
+        id: levelId,
+        worldId: worldId,
+        name: `Nivel ${i}`,
+        order: i,
+        isCompleted: completed,
+        isUnlocked,
+        isCurrent,
+        stars: progress?.stars || 0,
+        xpReward: 50 + (i * 10),
+      })
+
+      previousLevelCompleted = completed
     }
 
-    loadWorldData()
-  }, [user, worldId])
+    return levelsList
+  }, [worldId, progressMap])
 
   const handlePlayLevel = (levelId: string) => {
     router.push(`/play/${levelId}`)
@@ -68,7 +85,7 @@ export default function WorldPage() {
     router.push("/worlds")
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <ProtectedRoute>
         <MenuLayout>

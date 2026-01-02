@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/contexts/auth-context"
 import { AcademyProvider } from "@/contexts/academy-context"
+import { ProgressProvider } from "@/contexts/progress-context"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -28,7 +29,9 @@ export default function RootLayout({
     <html lang="es">
       <body className="font-sans antialiased">
         <AuthProvider>
-          <AcademyProvider>{children}</AcademyProvider>
+          <ProgressProvider>
+            <AcademyProvider>{children}</AcademyProvider>
+          </ProgressProvider>
         </AuthProvider>
         <Analytics />
       </body>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getBlockLesson, getNewBlocksIntroducedIn, type BlockLesson } from "@/lib/block-progression"
 import { useAuth } from "@/contexts/auth-context"
-import { markLessonSeen, getSeenLessons } from "@/src/lib/services/lessonService"
+import { markLessonSeen, getSeenLessons, markMultipleLessonsSeen } from "@/src/lib/services/lessonService"
 
 interface NewBlockIntroModalProps {
   blockIds: string[]
@@ -124,9 +124,8 @@ export function NewBlockIntroModal({ blockIds, levelId, onClose }: NewBlockIntro
   }
 
   const handleSkipAll = async () => {
-    for (const id of blockIds) {
-      await markLessonSeen(user?.id || null, id)
-    }
+    // Use batch function for single Firestore write instead of N writes
+    await markMultipleLessonsSeen(user?.id || null, blockIds)
     setIsOpen(false)
     onClose()
   }

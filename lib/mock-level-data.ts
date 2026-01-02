@@ -383,9 +383,38 @@ const LEVELS: Record<string, LevelData> = {
     treasureFragment: fragment(2, 3, "Isla Remolinos"),
   }),
 
+  // 2-13 — Nivel extra: navegación nocturna avanzada
+  "2-13": level({
+    id: "2-13",
+    title: "Noche Profunda",
+    gridSize: { rows: 7, cols: 7 },
+    startPosition: pos(0, 3, "east"),
+    objectives: [reach(6, 3), collectCoins(3)],
+    obstacles: [kraken(2, 2), kraken(2, 4), kraken(4, 2), kraken(4, 4)],
+    collectibles: [coin("c1", 1, 1), coin("c2", 3, 5), coin("c3", 5, 1)],
+    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+    optimalSolution: { blockCount: 20 },
+    hints: ["Los Krakens forman un patrón en X.", "Buscá el camino seguro por los bordes.", "Usá repeat para los tramos largos."],
+  }),
+
+  // 2-14 — Cierre del World 2
+  "2-14": level({
+    id: "2-14",
+    title: "Señor de las Mareas",
+    gridSize: { rows: 8, cols: 8 },
+    startPosition: pos(0, 0, "east"),
+    objectives: [reach(7, 7), collectCoins(5)],
+    obstacles: [kraken(2, 2), kraken(3, 5), kraken(5, 3), kraken(6, 6)],
+    collectibles: [coin("c1", 1, 3), coin("c2", 3, 1), coin("c3", 4, 4), coin("c4", 6, 2), coin("c5", 7, 5)],
+    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat"],
+    optimalSolution: { blockCount: 28 },
+    hints: ["Nivel final del mundo.", "Usá repeat para los tramos largos.", "Evitá los Krakens con giros cortos."],
+  }),
+
   // =========================
   // WORLD 3 — DECISIONES (3-1..3-12) — IF-BLOCKED
   // =========================
+
 
   // 3-1 — Presenta if-blocked como “si adelante hay obstáculo, girá”
   "3-1": level({

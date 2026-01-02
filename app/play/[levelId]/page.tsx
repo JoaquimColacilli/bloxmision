@@ -17,8 +17,8 @@ import { NewBlockIntroModal, useNewBlocksForLevel } from "@/components/help/new-
 import { ProtectedRoute } from "@/components/auth/auth-guard"
 import { useBlockEngine } from "@/hooks/use-block-engine"
 import { useAuth } from "@/contexts/auth-context"
-import { submitLevelProgress, recalculateUserXP } from "@/src/lib/services/progressService"
-import { getMaxUnlockedLevelNum } from "@/src/lib/services/worldService"
+import { submitLevelProgress } from "@/src/lib/services/progressService"
+import { useProgress } from "@/contexts/progress-context"
 import { checkAndAwardBadges } from "@/src/lib/services/badgeService"
 import { LevelLockedModal } from "@/components/game/level-locked-modal"
 import { FragmentUnlockedModal } from "@/components/game/fragment-unlocked-modal"
@@ -130,32 +130,23 @@ export default function PlayPage() {
   // Mensajes de JORC personalizados por mundo y nivel
   const jorcMessages = useMemo(() => getJorcMessages(worldNumericId, requestedLevelNum), [worldNumericId, requestedLevelNum])
 
-  // XP Sync and Level Access Check on mount
+  // Get cached progress from context
+  const { getMaxUnlockedLevel, isLoading: progressLoading, invalidateCache } = useProgress()
+
+  // Level Access Check using cached progress (no Firestore read)
+  // NOTE: recalculateUserXP was removed to reduce Firestore reads.
   useEffect(() => {
-    if (!user) return
+    if (!user || progressLoading) return
 
-    const syncAndCheckAccess = async () => {
-      try {
-        // 1. Recalculate XP from progress records (one-time sync for buggy saves)
-        await recalculateUserXP(user.id)
-        await refreshUser()
+    // Use cached progress - no Firestore call needed
+    const maxLevel = getMaxUnlockedLevel(worldNumericId)
+    setMaxUnlockedLevel(maxLevel)
 
-        // 2. Check if user can access this level
-        const maxLevel = await getMaxUnlockedLevelNum(user.id, worldNumericId)
-        setMaxUnlockedLevel(maxLevel)
-
-        if (requestedLevelNum > maxLevel) {
-          setIsLevelLocked(true)
-        }
-      } catch (error) {
-        console.error('Error during sync/access check:', error)
-      } finally {
-        setAccessCheckDone(true)
-      }
+    if (requestedLevelNum > maxLevel) {
+      setIsLevelLocked(true)
     }
-
-    syncAndCheckAccess()
-  }, [user, worldNumericId, requestedLevelNum, refreshUser])
+    setAccessCheckDone(true)
+  }, [user, worldNumericId, requestedLevelNum, progressLoading, getMaxUnlockedLevel])
 
   useEffect(() => {
     if (newBlockIds.length > 0) {
@@ -559,6 +550,9 @@ export default function PlayPage() {
         )
 
         if (progressResult.success) {
+          // Invalidate progress cache so next level check uses updated data
+          await invalidateCache()
+
           // Refresh user data to update XP bar
           await refreshUser()
 
@@ -615,7 +609,7 @@ export default function PlayPage() {
       const nextLevelNum = Number.parseInt(levelNum || "1") + 1
       router.push(`/play/${worldPrefix}-${nextLevelNum}`)
     }
-  }, [router, levelId, user, executionResult, levelConfig, codeBlocks, attemptsCount, viewedHintIndex, refreshUser, isSaving])
+  }, [router, levelId, user, executionResult, levelConfig, codeBlocks, attemptsCount, viewedHintIndex, refreshUser, isSaving, invalidateCache])
 
   // Handle fragment modal close - navigate to next level
   const handleFragmentModalClose = useCallback(() => {

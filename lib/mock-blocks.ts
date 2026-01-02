@@ -1,4 +1,5 @@
 import type { BlockCategoryData } from "@/lib/types"
+import { getLevelConfig } from "./mock-level-data"
 
 export const mockBlockCategories: BlockCategoryData[] = [
   {
@@ -60,6 +61,7 @@ export const mockBlockCategories: BlockCategoryData[] = [
         params: [{ name: "veces", type: "number", default: 3, min: 1, max: 20 }],
       },
       { id: "repeat-until", type: "repeat-until", category: "control", label: "Repetir hasta", shape: "loop" },
+      { id: "if-blocked", type: "if-blocked", category: "control", label: "Si Bloqueado", shape: "conditional" },
       { id: "if", type: "if", category: "control", label: "Si", shape: "conditional" },
       { id: "if-else", type: "if-else", category: "control", label: "Si-Sino", shape: "conditional" },
     ],
@@ -93,6 +95,7 @@ export const mockBlockCategories: BlockCategoryData[] = [
     borderColor: "#16A34A", // green-600
     icon: "database",
     blocks: [
+      { id: "variable", type: "variable", category: "memory", label: "Variable", shape: "variable" },
       { id: "create-var", type: "variable", category: "memory", label: "Crear variable", shape: "variable" },
       { id: "set-var", type: "variable", category: "memory", label: "Establecer", shape: "variable" },
       { id: "change-var", type: "variable", category: "memory", label: "Cambiar", shape: "variable" },
@@ -107,133 +110,25 @@ export const mockBlockCategories: BlockCategoryData[] = [
     borderColor: "#DC2626", // red-600
     icon: "code",
     blocks: [
+      { id: "function-define", type: "define", category: "commands", label: "Definir Función", shape: "loop" },
+      { id: "function-call", type: "call", category: "commands", label: "Llamar Función", shape: "command" },
       { id: "define-cmd", type: "define", category: "commands", label: "Definir", shape: "loop" },
       { id: "call-cmd", type: "call", category: "commands", label: "Llamar", shape: "command" },
     ],
   },
 ]
 
-// Helper to get blocks for a specific level (can filter by available blocks)
+// Helper to get blocks for a specific level based on level configuration
 export function getBlocksForLevel(levelId: string): BlockCategoryData[] {
-  const movement = mockBlockCategories.find((c) => c.id === "movement")
-  const actions = mockBlockCategories.find((c) => c.id === "actions")
-  const control = mockBlockCategories.find((c) => c.id === "control")
+  const config = getLevelConfig(levelId)
+  const availableBlockIds = config.availableBlocks || ["forward"]
 
-  if (!movement || !actions || !control) return []
-
-  // ========== WORLD 1 LEVELS (1-1 to 1-12) ==========
-
-  // 1-1: Only forward
-  if (levelId === "1-1" || levelId === "tutorial") {
-    return [{
-      ...movement,
-      blocks: movement.blocks.filter((b) => b.id === "forward"),
-    }]
-  }
-
-  // 1-2: Forward + turn-right
-  if (levelId === "1-2") {
-    return [{
-      ...movement,
-      blocks: movement.blocks.filter((b) => ["forward", "turn-right"].includes(b.id)),
-    }]
-  }
-
-  // 1-3: Forward + both turns
-  if (levelId === "1-3") {
-    return [{
-      ...movement,
-      blocks: movement.blocks.filter((b) => ["forward", "turn-right", "turn-left"].includes(b.id)),
-    }]
-  }
-
-  // 1-4: Forward + collect-coin (introduces collecting)
-  if (levelId === "1-4") {
-    return [
-      { ...movement, blocks: movement.blocks.filter((b) => b.id === "forward") },
-      { ...actions, blocks: actions.blocks.filter((b) => b.id === "collect-coin") },
-    ]
-  }
-
-  // 1-5: Forward + turn-right + turn-left + collect-coin
-  if (levelId === "1-5") {
-    return [
-      { ...movement, blocks: movement.blocks.filter((b) => ["forward", "turn-right", "turn-left"].includes(b.id)) },
-      { ...actions, blocks: actions.blocks.filter((b) => b.id === "collect-coin") },
-    ]
-  }
-
-  // 1-6: All turns + collect-coin
-  if (levelId === "1-6") {
-    return [
-      { ...movement, blocks: movement.blocks.filter((b) => ["forward", "turn-right", "turn-left"].includes(b.id)) },
-      { ...actions, blocks: actions.blocks.filter((b) => b.id === "collect-coin") },
-    ]
-  }
-
-  // 1-7, 1-8, 1-9: All basic movement (no actions needed for 1-7, 1-9)
-  if (levelId === "1-7" || levelId === "1-9") {
-    return [{
-      ...movement,
-      blocks: movement.blocks.filter((b) => ["forward", "turn-right", "turn-left"].includes(b.id)),
-    }]
-  }
-
-  // 1-8: Movement + collect-coin
-  if (levelId === "1-8") {
-    return [
-      { ...movement, blocks: movement.blocks.filter((b) => ["forward", "turn-right", "turn-left"].includes(b.id)) },
-      { ...actions, blocks: actions.blocks.filter((b) => b.id === "collect-coin") },
-    ]
-  }
-
-  // 1-10: Forward + repeat (introduces loops)
-  if (levelId === "1-10") {
-    return [
-      { ...movement, blocks: movement.blocks.filter((b) => b.id === "forward") },
-      { ...control, blocks: control.blocks.filter((b) => b.id === "repeat") },
-    ]
-  }
-
-  // 1-11: Movement + turn-right + repeat
-  if (levelId === "1-11") {
-    return [
-      { ...movement, blocks: movement.blocks.filter((b) => ["forward", "turn-right"].includes(b.id)) },
-      { ...control, blocks: control.blocks.filter((b) => b.id === "repeat") },
-    ]
-  }
-
-  // 1-12: All basic movement + collect-coin + repeat
-  if (levelId === "1-12") {
-    return [
-      { ...movement, blocks: movement.blocks.filter((b) => ["forward", "turn-right", "turn-left"].includes(b.id)) },
-      { ...actions, blocks: actions.blocks.filter((b) => b.id === "collect-coin") },
-      { ...control, blocks: control.blocks.filter((b) => b.id === "repeat") },
-    ]
-  }
-
-  // ========== SECUENCIA LEVELS (fallback to generic) ==========
-  const parts = levelId.split("-")
-  const levelNumber = Number.parseInt(parts[parts.length - 1], 10) || 1
-
-  // Secuencia 1: Basic movement
-  if (levelNumber === 1) {
-    return [{
-      ...movement,
-      blocks: movement.blocks.filter((b) => ["forward", "turn-left", "turn-right"].includes(b.id)),
-    }]
-  }
-
-  // Secuencia 2-5: Movement + actions
-  if (levelNumber <= 5) {
-    return [movement, actions]
-  }
-
-  // Secuencia 6-8: Add control
-  if (levelNumber <= 8) {
-    return [movement, actions, control]
-  }
-
-  // Advanced levels
+  // Filter categories to only include blocks that are available for this level
   return mockBlockCategories
+    .map((category) => ({
+      ...category,
+      blocks: category.blocks.filter((block) => availableBlockIds.includes(block.id)),
+    }))
+    .filter((category) => category.blocks.length > 0)
 }
+

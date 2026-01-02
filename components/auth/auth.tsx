@@ -104,7 +104,7 @@ export function Auth({ onLogin, onRegister, onGoogleAuth, onSuccess }: AuthProps
               Email: <code className="rounded bg-ocean-100 px-1">admin@bloxmision.com</code>
             </p>
             <p className="text-ocean-600">
-              Password: <code className="rounded bg-ocean-100 px-1">admin</code> (5 letras permitidas en demo)
+              Password: <code className="rounded bg-ocean-100 px-1">admin123</code>
             </p>
           </div>
 

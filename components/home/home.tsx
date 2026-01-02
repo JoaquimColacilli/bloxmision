@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { Compass, Map, User, Ship, Anchor, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ProgressCard } from "./progress-card"
-import { getUserWorldsProgress, WORLD_DEFINITIONS, getMaxUnlockedLevelNum } from "@/src/lib/services/worldService"
+import { WORLD_DEFINITIONS } from "@/src/lib/services/worldService"
+import { useProgress } from "@/contexts/progress-context"
 import type { User as UserType } from "@/lib/types"
 
 interface HomeProps {
@@ -49,55 +50,24 @@ function HomeError({ message, onRetry }: { message: string; onRetry?: () => void
 }
 
 export function Home({ user, loading, error, onRetry }: HomeProps) {
-  const [nextLevelPath, setNextLevelPath] = useState<string>("/worlds")
-  const [loadingProgress, setLoadingProgress] = useState(false)
+  // Use cached progress from context (no Firestore reads)
+  const { getCurrentWorldId, getMaxUnlockedLevel, getWorldCompletedCount, isLoading: progressLoading } = useProgress()
 
-  // Calculate the next level to play from the progress subcollection
-  useEffect(() => {
-    async function calculateNextLevel() {
-      if (!user) {
-        setNextLevelPath("/worlds")
-        return
-      }
+  // Calculate next level path from cached data
+  const nextLevelPath = useMemo(() => {
+    if (!user) return "/worlds"
 
-      setLoadingProgress(true)
-      try {
-        // Get all world progress from subcollection
-        const worldsProgress = await getUserWorldsProgress(user.id)
+    const currentWorldId = getCurrentWorldId()
+    if (!currentWorldId) return "/worlds"
 
-        // Find the current world (first unlocked and incomplete)
-        const currentWorld = worldsProgress.find(w => w.isCurrent)
+    const worldDef = WORLD_DEFINITIONS.find(w => w.id === currentWorldId)
+    if (!worldDef) return "/worlds"
 
-        if (!currentWorld) {
-          // No current world, go to worlds selection
-          setNextLevelPath("/worlds")
-          return
-        }
+    const nextLevelNum = getMaxUnlockedLevel(worldDef.numericId)
+    return `/play/${worldDef.numericId}-${nextLevelNum}`
+  }, [user, getCurrentWorldId, getMaxUnlockedLevel])
 
-        // Get the world definition to find its numeric ID
-        const worldDef = WORLD_DEFINITIONS.find(w => w.id === currentWorld.worldId)
-        if (!worldDef) {
-          setNextLevelPath("/worlds")
-          return
-        }
-
-        // Get the next unlocked level in this world
-        const nextLevelNum = await getMaxUnlockedLevelNum(user.id, worldDef.numericId)
-
-        // Navigate to the next level
-        setNextLevelPath(`/play/${worldDef.numericId}-${nextLevelNum}`)
-      } catch (err) {
-        console.error("Error calculating next level:", err)
-        setNextLevelPath("/worlds")
-      } finally {
-        setLoadingProgress(false)
-      }
-    }
-
-    calculateNextLevel()
-  }, [user])
-
-  if (loading || loadingProgress) {
+  if (loading || progressLoading) {
     return <HomeSkeleton />
   }
 

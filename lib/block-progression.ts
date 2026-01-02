@@ -9,7 +9,7 @@ import { getLevelConfig } from "./mock-level-data"
 
 // Canonical level order for detection
 const WORLDS = [1, 2, 3, 4, 5]
-const LEVELS_PER_WORLD = 12
+const LEVELS_PER_WORLD = 15  // Maximum levels per world (some worlds have 14-15)
 
 function getCanonicalLevelOrder(): string[] {
     const order: string[] = []

@@ -19,7 +19,7 @@ interface FormErrors {
 }
 
 const DEMO_EMAIL = "admin@bloxmision.com"
-const DEMO_PASSWORD = "admin"
+const DEMO_PASSWORD = "admin123"
 
 export function LoginForm({ onSubmit, onGoogleAuth, onSwitchToRegister, isLoading }: LoginFormProps) {
   const [email, setEmail] = useState("")
