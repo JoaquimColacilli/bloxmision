@@ -389,6 +389,49 @@ export function useBlockEngine(options: UseBlockEngineOptions): UseBlockEngineRe
           break
         }
 
+        case "if-blocked": {
+          // Check if there's a physical obstacle in front (NOT map boundaries)
+          // This forces kids to think about map limits as part of their logic
+          const delta = getForwardDelta(newState.jorc.facing)
+          const frontX = newState.jorc.x + delta.dx
+          const frontY = newState.jorc.y + delta.dy
+
+          // Only check for physical obstacles - map edges don't count as "blocked"
+          const isBlocked = obstacles.some(
+            (o) => o.x === frontX && o.y === frontY && ["rock", "tree", "wall", "kraken"].includes(o.type)
+          )
+
+          // Only execute children if blocked
+          if (isBlocked && block.children && block.children.length > 0) {
+            for (const child of block.children) {
+              if (abortedRef.current) throw new Error("Aborted")
+              const result = await executeBlock(child, blockIndex, newState)
+              Object.assign(newState, result)
+
+              if (newState.stepCount > MAX_STEPS) {
+                throw {
+                  type: "infinite_loop",
+                  message: "Loop infinito detectado!",
+                  blockIndex,
+                } as ExecutionError
+              }
+            }
+          }
+          break
+        }
+
+        case "if": {
+          // Generic if - always executes children for now (can be extended with conditions)
+          if (block.children && block.children.length > 0) {
+            for (const child of block.children) {
+              if (abortedRef.current) throw new Error("Aborted")
+              const result = await executeBlock(child, blockIndex, newState)
+              Object.assign(newState, result)
+            }
+          }
+          break
+        }
+
         case "sensor": {
           break
         }

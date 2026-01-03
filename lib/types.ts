@@ -19,6 +19,55 @@ export interface User {
   unlockedFragmentsMap?: Record<string, true>
   treasureFragmentsCount?: number
   mapCompleted?: boolean
+  // JorCoins Economy System
+  jorCoins?: number              // Current balance
+  jorCoinsEarned?: number        // Total earned historically
+  jorCoinsSpent?: number         // Total spent historically
+  equippedItems?: EquippedItems  // Currently equipped cosmetics
+}
+
+// ============ SHOP SYSTEM ============
+
+export type ShopCategory = 'avatar' | 'pet' | 'accessory' | 'weapon' | 'effect'
+export type ItemRarity = 'common' | 'rare' | 'epic' | 'legendary'
+
+export interface ShopItem {
+  id: string                     // "avatar-marinero"
+  name: string                   // "Jorc Marinero"
+  description: string            // "Listo para surcar los mares"
+  category: ShopCategory
+  rarity: ItemRarity
+  price: number                  // Base price in JorCoins
+  discountPrice?: number         // Sale price (optional)
+  thumbnailEmoji: string         // Placeholder emoji until real art
+  isDefault?: boolean            // True only for free default items
+  requiredLevel?: number         // Minimum player level to buy
+}
+
+export interface EquippedItems {
+  avatar?: string                // Item ID
+  pet?: string
+  hat?: string
+  weapon?: string
+  effect?: string
+}
+
+// Stored in /users/{uid}/inventory/{itemId}
+export interface InventoryItem {
+  itemId: string
+  purchasedAt: Date
+  pricePaid: number
+}
+
+// Stored in /users/{uid}/transactions/{txId}
+export interface ShopTransaction {
+  id: string
+  itemId: string
+  itemName: string
+  price: number
+  type: 'purchase' | 'reward'
+  rewardReason?: string          // For rewards: "level-1-4", "streak-7"
+  createdAt: Date
 }
 
 export interface World {

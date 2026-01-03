@@ -4,7 +4,8 @@ import {
     setDoc,
     runTransaction,
     serverTimestamp,
-    Timestamp
+    Timestamp,
+    increment,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { calculateXP, getPlayerLevel, getCurrentLevelXP, getNextLevelThreshold, FRAGMENT_BONUS } from './xpCalculator';
@@ -16,8 +17,9 @@ const MAX_FRAGMENTS = 15;  // Used in submitLevelProgress
 export interface SubmitProgressResult {
     success: boolean;
     xpEarned?: number;
+    jorCoinsEarned?: number;     // JorCoins earned for this level
     isOptimal?: boolean;
-    fragmentUnlocked?: string;  // fragmentId if a new fragment was unlocked
+    fragmentUnlocked?: string;   // fragmentId if a new fragment was unlocked
     totalFragments?: number;     // Total fragments after this completion
     mapCompleted?: boolean;      // True if this was the 15th fragment
     message?: string;
@@ -97,7 +99,14 @@ export async function submitLevelProgress(
             // 8. Calculate stars
             const stars = isOptimal ? 3 : (usedHints === 0 ? 2 : 1);
 
-            // 9. Create progress document (ATOMIC)
+            // 9. Calculate JorCoins earned
+            // Base: 10, Optimal (3 stars): +5, No hints: +3, Fragment: +10
+            let jorCoins = 10; // Base reward
+            if (isOptimal) jorCoins += 5;
+            if (usedHints === 0) jorCoins += 3;
+            if (willUnlockFragment) jorCoins += 10;
+
+            // 10. Create progress document (ATOMIC)
             transaction.set(progressRef, {
                 levelId,
                 worldId: String(level.worldId || "1"),
@@ -108,17 +117,21 @@ export async function submitLevelProgress(
                 isOptimal: isOptimal,
                 stars,
                 xpEarned: xpResult.totalXP,
+                jorCoinsAwarded: jorCoins, // Track for idempotency
                 completedAt: serverTimestamp(),
                 isFirstCompletion: true,
                 grantedFragmentId: willUnlockFragment && fragment ? fragment.fragmentId : null
             });
 
-            // 10. Update user document (ATOMIC - same transaction)
+            // 11. Update user document (ATOMIC - same transaction)
             const userUpdate: Record<string, any> = {
                 totalXP: newTotalXP,
                 playerLevel: getPlayerLevel(newTotalXP),
                 currentXP: getCurrentLevelXP(newTotalXP),
                 nextLevelThreshold: getNextLevelThreshold(newTotalXP),
+                // JorCoins
+                jorCoins: increment(jorCoins),
+                jorCoinsEarned: increment(jorCoins),
                 updatedAt: serverTimestamp()
             };
 
@@ -136,6 +149,7 @@ export async function submitLevelProgress(
             return {
                 success: true,
                 xpEarned: xpResult.totalXP,
+                jorCoinsEarned: jorCoins,
                 isOptimal: isOptimal,
                 fragmentUnlocked: willUnlockFragment && fragment ? fragment.fragmentId : undefined,
                 totalFragments: newFragmentsCount,

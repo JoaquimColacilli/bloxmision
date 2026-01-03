@@ -107,6 +107,50 @@ service cloud.firestore {
         // INMUTABLE: No updates ni deletes
         allow update, delete: if false;
       }
+      
+      // ============================================
+      // USER INVENTORY SUBCOLLECTION (JorCoins Shop)
+      // /users/{uid}/inventory/{itemId}
+      // Immutable purchases - create only in transaction
+      // ============================================
+      
+      match /inventory/{itemId} {
+        // READ: Only own inventory
+        allow read: if isOwner(userId);
+        
+        // CREATE: Valid purchase in transaction
+        // Must be accompanied by jorCoins decrease
+        allow create: if isOwner(userId)
+          && request.resource.data.itemId == itemId
+          && request.resource.data.pricePaid >= 0
+          // Verify jorCoins decreased in same transaction
+          && (
+            getAfter(/databases/$(database)/documents/users/$(userId)).data.jorCoins
+            <= get(/databases/$(database)/documents/users/$(userId)).data.jorCoins
+          );
+        
+        // IMMUTABLE: No updates or deletes
+        allow update, delete: if false;
+      }
+      
+      // ============================================
+      // USER TRANSACTIONS SUBCOLLECTION (JorCoins History)
+      // /users/{uid}/transactions/{txId}
+      // Immutable transaction log
+      // ============================================
+      
+      match /transactions/{txId} {
+        // READ: Only own transactions
+        allow read: if isOwner(userId);
+        
+        // CREATE: Valid transaction record
+        allow create: if isOwner(userId)
+          && request.resource.data.type in ['purchase', 'reward']
+          && request.resource.data.price is number;
+        
+        // IMMUTABLE: No updates or deletes
+        allow update, delete: if false;
+      }
     }
     
     // ============================================

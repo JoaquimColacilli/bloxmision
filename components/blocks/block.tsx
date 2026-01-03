@@ -318,10 +318,10 @@ export const Block = memo(function Block({
             ref={blockRef}
             role="button"
             tabIndex={disabled ? -1 : 0}
-            className={cn(baseClasses, focusClasses, "relative overflow-visible p-0")}
-            onClick={handleClick}
+            className={cn("relative w-full", focusClasses)}
+            onClick={variant === "palette" ? handleClick : undefined}
             onKeyDown={handleKeyDown}
-            draggable={!disabled}
+            draggable={!disabled && variant === "palette"}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             data-block-id={definition.id}
@@ -331,13 +331,21 @@ export const Block = memo(function Block({
             aria-label={`Bloque condicional: ${definition.label}`}
             aria-disabled={disabled}
           >
-            {/* Hexagonal/diamond shape using clip-path */}
+            {/* Top part of C-shape */}
             <div
-              className={cn(bgColor, "flex min-h-[56px] w-full items-center gap-2 px-4 py-2")}
-              style={{
-                clipPath: "polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%)",
-              }}
+              className={cn(
+                bgColor,
+                bdColor,
+                "flex min-h-[44px] items-center gap-2 rounded-t-lg border-2 border-b-0 px-3 py-2",
+                baseClasses.includes("cursor-grab") && !disabled && "cursor-grab hover:shadow-lg",
+                variant === "running" && "animate-pulse ring-2 ring-white",
+                textColor,
+              )}
             >
+              {/* Diamond icon indicator for conditional */}
+              <div className="size-5 shrink-0 rotate-45 rounded-sm bg-white/30 border border-white/50 flex items-center justify-center">
+                <span className="-rotate-45 text-xs">?</span>
+              </div>
               {useSprite ? (
                 <ActionSprite
                   action={BLOCK_TO_ACTION[definition.type]}
@@ -352,6 +360,44 @@ export const Block = memo(function Block({
               {renderParams()}
               {renderCodeActions()}
             </div>
+
+            {/* Middle indent for nested blocks */}
+            <div className="flex">
+              <div className={cn(bgColor, bdColor, "w-4 shrink-0 border-l-2 border-r-0")} />
+              <div
+                className={cn(
+                  "min-h-[48px] flex-1 min-w-0 overflow-visible rounded-sm p-2 transition-colors",
+                  isLoopDragOver ? "bg-gold-200/60" : "bg-black/10",
+                )}
+              >
+                <div className="flex flex-col gap-1">
+                  {/* Render existing children */}
+                  {children && (
+                    <div className={cn(isLoopDragOver && "pointer-events-none")}>
+                      {children}
+                    </div>
+                  )}
+                  {/* Always show drop zone for adding more blocks */}
+                  <div
+                    className={cn(
+                      "flex min-h-[40px] items-center justify-center rounded-lg border-2 border-dashed text-sm font-medium transition-all cursor-copy",
+                      isLoopDragOver
+                        ? "border-gold-500 bg-gold-100 text-gold-700 scale-105"
+                        : "border-ocean-400/60 bg-ocean-100/40 text-ocean-600 hover:border-ocean-500 hover:bg-ocean-100/60",
+                    )}
+                    onDragOver={variant === "code" ? handleLoopDragOver : undefined}
+                    onDragEnter={variant === "code" ? handleLoopDragOver : undefined}
+                    onDragLeave={variant === "code" ? handleLoopDragLeave : undefined}
+                    onDrop={variant === "code" ? handleLoopDrop : undefined}
+                  >
+                    {isLoopDragOver ? "⬇ Suelta aquí ⬇" : (children ? "Suelta más bloques aquí" : "Arrastra bloques aquí")}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom part of C-shape */}
+            <div className={cn(bgColor, bdColor, "h-3 rounded-b-lg border-2 border-t-0")} />
           </div>
         )
 

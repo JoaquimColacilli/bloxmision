@@ -171,6 +171,23 @@ export const blockHelpData: Record<string, BlockHelp> = {
     tips: ["Si hay cofre entonces Abrir, sino Avanzar", "Mas flexible que solo Si"],
     related: ["if", "has-chest"],
   },
+  "if-blocked": {
+    id: "if-blocked",
+    title: "Si Bloqueado",
+    category: "control",
+    description: "Detecta si hay un obstaculo (roca, muro, kraken) adelante. Si hay algo bloqueando, ejecuta los bloques de adentro.",
+    visual: {
+      before: [["🏴‍☠️→", "🪨", "⬜"]],
+      after: [["🏴‍☠️↓", "🪨", "⬜"]],
+    },
+    tips: [
+      "Solo detecta obstaculos fisicos, no el borde del mapa",
+      "Perfecto para esquivar rocas automaticamente",
+      "Combinalo con Repetir para un autopiloto inteligente",
+      "Ejemplo: Si Bloqueado entonces Girar Derecha",
+    ],
+    related: ["if", "repeat", "has-obstacle"],
+  },
   "has-obstacle": {
     id: "has-obstacle",
     title: "Hay obstaculo?",

@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Skeleton } from "@/components/ui/skeleton"
 import { UserBadge } from "./user-badge"
 import { XPBar } from "./xp-bar"
+import { JorCoinDisplay } from "./jorcoin-display"
 import { SettingsMenu } from "./settings-menu"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { User, Settings } from "@/lib/types"
@@ -109,6 +110,14 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
                 />
               )}
 
+              {/* JorCoins Display */}
+              <JorCoinDisplay
+                balance={user.jorCoins || 0}
+                showBazarButton={!isMobile}
+                variant={resolvedVariant === "full" ? "full" : "compact"}
+                className="hidden sm:flex"
+              />
+
               {/* User Badge */}
               <UserBadge
                 displayName={user.displayName}
@@ -161,6 +170,20 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
                         variant="full"
                       />
                     </div>
+
+                    {/* JorCoins in mobile menu */}
+                    <Link
+                      href="/bazar"
+                      className="mt-4 flex items-center justify-between rounded-xl bg-yellow-100 p-4"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span className="font-medium text-yellow-800">Ir al Bazar</span>
+                      <JorCoinDisplay
+                        balance={user.jorCoins || 0}
+                        showBazarButton={false}
+                        variant="compact"
+                      />
+                    </Link>
                   </SheetContent>
                 </Sheet>
               )}
