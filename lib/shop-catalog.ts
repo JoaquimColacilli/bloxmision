@@ -11,7 +11,10 @@
 
 import type { ShopItem, ShopCategory, ItemRarity } from './types'
 
-// ============ AVATARS ============
+// Base path for bazar sprites
+const SPRITE_BASE = '/sprites/bazar'
+
+// ============ AVATARS (SKINS) ============
 const avatars: ShopItem[] = [
     {
         id: 'avatar-default',
@@ -20,7 +23,7 @@ const avatars: ShopItem[] = [
         category: 'avatar',
         rarity: 'common',
         price: 0,
-        thumbnailEmoji: '🏴‍☠️',
+        thumbnailUrl: `${SPRITE_BASE}/skins/jorc-clasico.png`,
         isDefault: true,
     },
     {
@@ -30,7 +33,7 @@ const avatars: ShopItem[] = [
         category: 'avatar',
         rarity: 'common',
         price: 100,
-        thumbnailEmoji: '⚓',
+        thumbnailUrl: `${SPRITE_BASE}/skins/jorc-marinero.png`,
     },
     {
         id: 'avatar-capitan',
@@ -39,7 +42,7 @@ const avatars: ShopItem[] = [
         category: 'avatar',
         rarity: 'common',
         price: 250,
-        thumbnailEmoji: '🎖️',
+        thumbnailUrl: `${SPRITE_BASE}/skins/jorc-capitan.png`,
     },
     {
         id: 'avatar-pirata-legendario',
@@ -48,7 +51,7 @@ const avatars: ShopItem[] = [
         category: 'avatar',
         rarity: 'rare',
         price: 500,
-        thumbnailEmoji: '⭐',
+        thumbnailUrl: `${SPRITE_BASE}/skins/jorc-pirata-legendario.png`,
     },
     {
         id: 'avatar-fantasma',
@@ -57,7 +60,7 @@ const avatars: ShopItem[] = [
         category: 'avatar',
         rarity: 'rare',
         price: 800,
-        thumbnailEmoji: '👻',
+        thumbnailUrl: `${SPRITE_BASE}/skins/jorc-fantasma.png`,
     },
     {
         id: 'avatar-dorado',
@@ -66,7 +69,7 @@ const avatars: ShopItem[] = [
         category: 'avatar',
         rarity: 'epic',
         price: 1500,
-        thumbnailEmoji: '✨',
+        thumbnailUrl: `${SPRITE_BASE}/skins/jorc-dorado.png`,
     },
 ]
 
@@ -79,7 +82,7 @@ const pets: ShopItem[] = [
         category: 'pet',
         rarity: 'common',
         price: 150,
-        thumbnailEmoji: '🦜',
+        thumbnailUrl: `${SPRITE_BASE}/pets/loro-verde.png`,
     },
     {
         id: 'pet-mono',
@@ -88,7 +91,7 @@ const pets: ShopItem[] = [
         category: 'pet',
         rarity: 'common',
         price: 200,
-        thumbnailEmoji: '🐒',
+        thumbnailUrl: `${SPRITE_BASE}/pets/mono-travieso.png`,
     },
     {
         id: 'pet-cangrejo',
@@ -97,7 +100,7 @@ const pets: ShopItem[] = [
         category: 'pet',
         rarity: 'common',
         price: 180,
-        thumbnailEmoji: '🦀',
+        thumbnailUrl: `${SPRITE_BASE}/pets/cangrejo-ermitano.png`,
     },
     {
         id: 'pet-pulpo',
@@ -106,7 +109,7 @@ const pets: ShopItem[] = [
         category: 'pet',
         rarity: 'rare',
         price: 600,
-        thumbnailEmoji: '🐙',
+        thumbnailUrl: `${SPRITE_BASE}/pets/pulpo-magico.png`,
     },
     {
         id: 'pet-dragon',
@@ -115,20 +118,29 @@ const pets: ShopItem[] = [
         category: 'pet',
         rarity: 'epic',
         price: 1200,
-        thumbnailEmoji: '🐉',
+        thumbnailUrl: `${SPRITE_BASE}/pets/dragon-marino.png`,
+    },
+    {
+        id: 'pet-rayita',
+        name: 'Rayita',
+        description: 'Un pez amigable y veloz',
+        category: 'pet',
+        rarity: 'common',
+        price: 120,
+        thumbnailUrl: `${SPRITE_BASE}/pets/rayita.png`,
     },
 ]
 
 // ============ ACCESSORIES ============
 const accessories: ShopItem[] = [
     {
-        id: 'acc-sombrero-pirata',
-        name: 'Sombrero Pirata',
-        description: 'El clásico sombrero de tres picos',
+        id: 'acc-barba',
+        name: 'Barba del Capitán',
+        description: 'Para verse más rudo',
         category: 'accessory',
         rarity: 'common',
         price: 80,
-        thumbnailEmoji: '🎩',
+        thumbnailUrl: `${SPRITE_BASE}/accesorios/barba-del-capitan.png`,
     },
     {
         id: 'acc-parche',
@@ -137,7 +149,7 @@ const accessories: ShopItem[] = [
         category: 'accessory',
         rarity: 'common',
         price: 60,
-        thumbnailEmoji: '🏴‍☠️',
+        thumbnailUrl: `${SPRITE_BASE}/accesorios/parche-en-el-ojo.png`,
     },
     {
         id: 'acc-bandana',
@@ -146,16 +158,16 @@ const accessories: ShopItem[] = [
         category: 'accessory',
         rarity: 'common',
         price: 70,
-        thumbnailEmoji: '🎀',
+        thumbnailUrl: `${SPRITE_BASE}/accesorios/bandana-roja.png`,
     },
     {
-        id: 'acc-tricornio',
-        name: 'Tricornio del Capitán',
-        description: 'Solo para los que mandan',
+        id: 'acc-arete',
+        name: 'Arete de Oro Épico',
+        description: 'Brilla como el sol',
         category: 'accessory',
         rarity: 'rare',
         price: 300,
-        thumbnailEmoji: '👑',
+        thumbnailUrl: `${SPRITE_BASE}/accesorios/arete-de-oro-epico.png`,
     },
     {
         id: 'acc-corona',
@@ -164,7 +176,16 @@ const accessories: ShopItem[] = [
         category: 'accessory',
         rarity: 'epic',
         price: 1000,
-        thumbnailEmoji: '👑',
+        thumbnailUrl: `${SPRITE_BASE}/accesorios/corona-dorada.png`,
+    },
+    {
+        id: 'acc-emblema',
+        name: 'Emblema Pirata',
+        description: 'Símbolo de los mares',
+        category: 'accessory',
+        rarity: 'common',
+        price: 90,
+        thumbnailUrl: `${SPRITE_BASE}/accesorios/emblema-pirata.png`,
     },
 ]
 
@@ -177,7 +198,7 @@ const weapons: ShopItem[] = [
         category: 'weapon',
         rarity: 'common',
         price: 100,
-        thumbnailEmoji: '🗡️',
+        thumbnailUrl: `${SPRITE_BASE}/armas/espada-de-madera.png`,
     },
     {
         id: 'weapon-sable',
@@ -186,7 +207,7 @@ const weapons: ShopItem[] = [
         category: 'weapon',
         rarity: 'common',
         price: 200,
-        thumbnailEmoji: '⚔️',
+        thumbnailUrl: `${SPRITE_BASE}/armas/sable-pirata.png`,
     },
     {
         id: 'weapon-catalejo',
@@ -195,7 +216,7 @@ const weapons: ShopItem[] = [
         category: 'weapon',
         rarity: 'common',
         price: 150,
-        thumbnailEmoji: '🔭',
+        thumbnailUrl: `${SPRITE_BASE}/armas/catalejo.png`,
     },
     {
         id: 'weapon-legendaria',
@@ -204,7 +225,25 @@ const weapons: ShopItem[] = [
         category: 'weapon',
         rarity: 'rare',
         price: 800,
-        thumbnailEmoji: '🔥',
+        thumbnailUrl: `${SPRITE_BASE}/armas/espada-legendaria.png`,
+    },
+    {
+        id: 'weapon-mata-krakens',
+        name: 'Mata-Krakens',
+        description: 'El terror de los monstruos marinos',
+        category: 'weapon',
+        rarity: 'epic',
+        price: 1500,
+        thumbnailUrl: `${SPRITE_BASE}/armas/mata-krakens.png`,
+    },
+    {
+        id: 'weapon-brujula',
+        name: 'Brújula Mágica',
+        description: 'Siempre apunta al tesoro',
+        category: 'weapon',
+        rarity: 'rare',
+        price: 400,
+        thumbnailUrl: `${SPRITE_BASE}/armas/brujula.png`,
     },
 ]
 
@@ -217,7 +256,7 @@ const effects: ShopItem[] = [
         category: 'effect',
         rarity: 'common',
         price: 120,
-        thumbnailEmoji: '🫧',
+        thumbnailUrl: `${SPRITE_BASE}/efectos/estela-de-burbujas.png`,
     },
     {
         id: 'effect-chispas',
@@ -226,7 +265,7 @@ const effects: ShopItem[] = [
         category: 'effect',
         rarity: 'rare',
         price: 250,
-        thumbnailEmoji: '✨',
+        thumbnailUrl: `${SPRITE_BASE}/efectos/chispas-doradas.png`,
     },
     {
         id: 'effect-estrellas',
@@ -235,7 +274,25 @@ const effects: ShopItem[] = [
         category: 'effect',
         rarity: 'rare',
         price: 400,
-        thumbnailEmoji: '⭐',
+        thumbnailUrl: `${SPRITE_BASE}/efectos/rastro-de-estrellas.png`,
+    },
+    {
+        id: 'effect-llama',
+        name: 'Efecto Llama',
+        description: 'Fuego en tus pasos',
+        category: 'effect',
+        rarity: 'epic',
+        price: 800,
+        thumbnailUrl: `${SPRITE_BASE}/efectos/efecto-llama.png`,
+    },
+    {
+        id: 'effect-brillo',
+        name: 'Efecto Brillo',
+        description: 'Destellos mágicos',
+        category: 'effect',
+        rarity: 'common',
+        price: 100,
+        thumbnailUrl: `${SPRITE_BASE}/efectos/efecto-brillo.png`,
     },
 ]
 
@@ -280,3 +337,6 @@ export const RARITY_COLORS: Record<ItemRarity, { bg: string; border: string; tex
     epic: { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-700' },
     legendary: { bg: 'bg-yellow-100', border: 'border-yellow-400', text: 'text-yellow-700' },
 }
+
+// Get JorCoin icon for display
+export const JORCOIN_SPRITE = `${SPRITE_BASE}/efectos/jorcoin.png`

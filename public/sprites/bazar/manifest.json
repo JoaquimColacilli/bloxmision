@@ -1,0 +1,252 @@
+{
+  "input": "BAZAR_SPRITES.png",
+  "image": {
+    "width": 548,
+    "height": 455
+  },
+  "grid": {
+    "cols": 6,
+    "cellWidth": 91,
+    "padLeft": 1
+  },
+  "rows": [
+    {
+      "category": "skins",
+      "top": 0,
+      "height": 75
+    },
+    {
+      "category": "pets",
+      "top": 103,
+      "height": 68
+    },
+    {
+      "category": "accesorios",
+      "top": 196,
+      "height": 62
+    },
+    {
+      "category": "armas",
+      "top": 278,
+      "height": 62
+    },
+    {
+      "category": "efectos",
+      "top": 379,
+      "height": 42
+    }
+  ],
+  "outSize": 64,
+  "items": [
+    {
+      "id": "jorc-clasico",
+      "category": "skins",
+      "file": "skins/jorc-clasico.png",
+      "col": 0,
+      "row": 0
+    },
+    {
+      "id": "jorc-marinero",
+      "category": "skins",
+      "file": "skins/jorc-marinero.png",
+      "col": 1,
+      "row": 0
+    },
+    {
+      "id": "jorc-capitan",
+      "category": "skins",
+      "file": "skins/jorc-capitan.png",
+      "col": 2,
+      "row": 0
+    },
+    {
+      "id": "jorc-pirata-legendario",
+      "category": "skins",
+      "file": "skins/jorc-pirata-legendario.png",
+      "col": 3,
+      "row": 0
+    },
+    {
+      "id": "jorc-fantasma",
+      "category": "skins",
+      "file": "skins/jorc-fantasma.png",
+      "col": 4,
+      "row": 0
+    },
+    {
+      "id": "jorc-dorado",
+      "category": "skins",
+      "file": "skins/jorc-dorado.png",
+      "col": 5,
+      "row": 0
+    },
+    {
+      "id": "loro-verde",
+      "category": "pets",
+      "file": "pets/loro-verde.png",
+      "col": 0,
+      "row": 1
+    },
+    {
+      "id": "mono-travieso",
+      "category": "pets",
+      "file": "pets/mono-travieso.png",
+      "col": 1,
+      "row": 1
+    },
+    {
+      "id": "cangrejo-ermitano",
+      "category": "pets",
+      "file": "pets/cangrejo-ermitano.png",
+      "col": 2,
+      "row": 1
+    },
+    {
+      "id": "pulpo-magico",
+      "category": "pets",
+      "file": "pets/pulpo-magico.png",
+      "col": 3,
+      "row": 1
+    },
+    {
+      "id": "dragon-marino",
+      "category": "pets",
+      "file": "pets/dragon-marino.png",
+      "col": 4,
+      "row": 1
+    },
+    {
+      "id": "rayita",
+      "category": "pets",
+      "file": "pets/rayita.png",
+      "col": 5,
+      "row": 1
+    },
+    {
+      "id": "barba-del-capitan",
+      "category": "accesorios",
+      "file": "accesorios/barba-del-capitan.png",
+      "col": 0,
+      "row": 2
+    },
+    {
+      "id": "parche-en-el-ojo",
+      "category": "accesorios",
+      "file": "accesorios/parche-en-el-ojo.png",
+      "col": 1,
+      "row": 2
+    },
+    {
+      "id": "bandana-roja",
+      "category": "accesorios",
+      "file": "accesorios/bandana-roja.png",
+      "col": 2,
+      "row": 2
+    },
+    {
+      "id": "arete-de-oro-epico",
+      "category": "accesorios",
+      "file": "accesorios/arete-de-oro-epico.png",
+      "col": 3,
+      "row": 2
+    },
+    {
+      "id": "corona-dorada",
+      "category": "accesorios",
+      "file": "accesorios/corona-dorada.png",
+      "col": 4,
+      "row": 2
+    },
+    {
+      "id": "emblema-pirata",
+      "category": "accesorios",
+      "file": "accesorios/emblema-pirata.png",
+      "col": 5,
+      "row": 2
+    },
+    {
+      "id": "espada-de-madera",
+      "category": "armas",
+      "file": "armas/espada-de-madera.png",
+      "col": 0,
+      "row": 3
+    },
+    {
+      "id": "sable-pirata",
+      "category": "armas",
+      "file": "armas/sable-pirata.png",
+      "col": 1,
+      "row": 3
+    },
+    {
+      "id": "catalejo",
+      "category": "armas",
+      "file": "armas/catalejo.png",
+      "col": 2,
+      "row": 3
+    },
+    {
+      "id": "espada-legendaria",
+      "category": "armas",
+      "file": "armas/espada-legendaria.png",
+      "col": 3,
+      "row": 3
+    },
+    {
+      "id": "mata-krakens",
+      "category": "armas",
+      "file": "armas/mata-krakens.png",
+      "col": 4,
+      "row": 3
+    },
+    {
+      "id": "brujula",
+      "category": "armas",
+      "file": "armas/brujula.png",
+      "col": 5,
+      "row": 3
+    },
+    {
+      "id": "estela-de-burbujas",
+      "category": "efectos",
+      "file": "efectos/estela-de-burbujas.png",
+      "col": 0,
+      "row": 4
+    },
+    {
+      "id": "chispas-doradas",
+      "category": "efectos",
+      "file": "efectos/chispas-doradas.png",
+      "col": 1,
+      "row": 4
+    },
+    {
+      "id": "rastro-de-estrellas",
+      "category": "efectos",
+      "file": "efectos/rastro-de-estrellas.png",
+      "col": 2,
+      "row": 4
+    },
+    {
+      "id": "efecto-llama",
+      "category": "efectos",
+      "file": "efectos/efecto-llama.png",
+      "col": 3,
+      "row": 4
+    },
+    {
+      "id": "efecto-brillo",
+      "category": "efectos",
+      "file": "efectos/efecto-brillo.png",
+      "col": 4,
+      "row": 4
+    },
+    {
+      "id": "jorcoin",
+      "category": "efectos",
+      "file": "efectos/jorcoin.png",
+      "col": 5,
+      "row": 4
+    }
+  ]
+}

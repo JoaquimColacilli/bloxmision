@@ -39,7 +39,8 @@ export interface ShopItem {
   rarity: ItemRarity
   price: number                  // Base price in JorCoins
   discountPrice?: number         // Sale price (optional)
-  thumbnailEmoji: string         // Placeholder emoji until real art
+  thumbnailEmoji?: string        // Fallback emoji
+  thumbnailUrl?: string          // Real sprite URL
   isDefault?: boolean            // True only for free default items
   requiredLevel?: number         // Minimum player level to buy
 }

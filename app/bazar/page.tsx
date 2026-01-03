@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { ArrowLeft, Check, ShoppingBag, Sparkles } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import type { ShopItem, ShopCategory } from "@/lib/types"
 
 export default function BazarPage() {
@@ -162,7 +163,18 @@ export default function BazarPage() {
                                 >
                                     {/* Item Preview */}
                                     <div className="relative flex h-40 items-center justify-center bg-gradient-to-br from-ocean-100 to-ocean-200">
-                                        <span className="text-7xl">{item.thumbnailEmoji}</span>
+                                        {item.thumbnailUrl ? (
+                                            <Image
+                                                src={item.thumbnailUrl}
+                                                alt={item.name}
+                                                width={80}
+                                                height={80}
+                                                className="object-contain pixelated"
+                                                style={{ imageRendering: 'pixelated' }}
+                                            />
+                                        ) : (
+                                            <span className="text-7xl">{item.thumbnailEmoji}</span>
+                                        )}
 
                                         {/* Rarity Badge */}
                                         <Badge
@@ -281,7 +293,18 @@ export default function BazarPage() {
                             </DialogHeader>
 
                             <div className="flex flex-col items-center gap-4 py-6">
-                                <span className="text-7xl">{purchaseModal.item.thumbnailEmoji}</span>
+                                {purchaseModal.item.thumbnailUrl ? (
+                                    <Image
+                                        src={purchaseModal.item.thumbnailUrl}
+                                        alt={purchaseModal.item.name}
+                                        width={96}
+                                        height={96}
+                                        className="object-contain"
+                                        style={{ imageRendering: 'pixelated' }}
+                                    />
+                                ) : (
+                                    <span className="text-7xl">{purchaseModal.item.thumbnailEmoji}</span>
+                                )}
                                 <div className="flex items-center gap-2 text-xl font-bold">
                                     <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600">
                                         <span className="text-sm font-bold text-yellow-900">J</span>

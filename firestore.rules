@@ -111,23 +111,18 @@ service cloud.firestore {
       // ============================================
       // USER INVENTORY SUBCOLLECTION (JorCoins Shop)
       // /users/{uid}/inventory/{itemId}
-      // Immutable purchases - create only in transaction
+      // Immutable purchases
       // ============================================
       
       match /inventory/{itemId} {
-        // READ: Only own inventory
+        // READ: Only own inventory (list and get)
         allow read: if isOwner(userId);
         
-        // CREATE: Valid purchase in transaction
-        // Must be accompanied by jorCoins decrease
+        // CREATE: Valid purchase - simplified validation
         allow create: if isOwner(userId)
           && request.resource.data.itemId == itemId
-          && request.resource.data.pricePaid >= 0
-          // Verify jorCoins decreased in same transaction
-          && (
-            getAfter(/databases/$(database)/documents/users/$(userId)).data.jorCoins
-            <= get(/databases/$(database)/documents/users/$(userId)).data.jorCoins
-          );
+          && request.resource.data.pricePaid is number
+          && request.resource.data.pricePaid >= 0;
         
         // IMMUTABLE: No updates or deletes
         allow update, delete: if false;

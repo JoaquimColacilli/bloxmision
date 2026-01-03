@@ -113,6 +113,8 @@ export function Header({ user, loading, variant = "full", settings, onLogout, on
               {/* JorCoins Display */}
               <JorCoinDisplay
                 balance={user.jorCoins || 0}
+                totalEarned={user.jorCoinsEarned || 0}
+                totalSpent={user.jorCoinsSpent || 0}
                 showBazarButton={!isMobile}
                 variant={resolvedVariant === "full" ? "full" : "compact"}
                 className="hidden sm:flex"
