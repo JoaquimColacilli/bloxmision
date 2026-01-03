@@ -4,6 +4,7 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Store, HelpCircle, Coins, Star, Flame, Trophy } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import {
     Dialog,
     DialogContent,
@@ -51,13 +52,14 @@ export function JorCoinDisplay({
                     aria-label="Ver información de JorCoins"
                 >
                     {/* Golden Coin Icon */}
-                    <div className="relative size-5 shrink-0">
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 shadow-sm" />
-                        <div className="absolute inset-0.5 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-yellow-800 drop-shadow-sm">J</span>
-                        </div>
-                    </div>
+                    <Image
+                        src="/sprites/bazar/efectos/jorcoin.png"
+                        alt="JorCoin"
+                        width={20}
+                        height={20}
+                        className="shrink-0"
+                        style={{ imageRendering: 'pixelated' }}
+                    />
 
                     {/* Balance Number */}
                     <span className={cn(
@@ -185,17 +187,17 @@ export function JorCoinDisplay({
  * JorCoin Icon - Large version for modals
  */
 function JorCoinIconLarge({ size = "md" }: { size?: "md" | "lg" }) {
-    const sizeClass = size === "lg" ? "size-12" : "size-8"
-    const textSize = size === "lg" ? "text-2xl" : "text-lg"
+    const sizePixels = size === "lg" ? 48 : 32
 
     return (
-        <div className={cn("relative shrink-0", sizeClass)}>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 shadow-lg" />
-            <div className="absolute inset-1 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500" />
-            <div className="absolute inset-0 flex items-center justify-center">
-                <span className={cn("font-bold text-yellow-800 drop-shadow-sm", textSize)}>J</span>
-            </div>
-        </div>
+        <Image
+            src="/sprites/bazar/efectos/jorcoin.png"
+            alt="JorCoin"
+            width={sizePixels}
+            height={sizePixels}
+            className="shrink-0"
+            style={{ imageRendering: 'pixelated' }}
+        />
     )
 }
 
@@ -204,12 +206,13 @@ function JorCoinIconLarge({ size = "md" }: { size?: "md" | "lg" }) {
  */
 export function JorCoinIcon({ className }: { className?: string }) {
     return (
-        <div className={cn("relative size-5", className)}>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 shadow-sm" />
-            <div className="absolute inset-0.5 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500" />
-            <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-yellow-800 drop-shadow-sm">J</span>
-            </div>
-        </div>
+        <Image
+            src="/sprites/bazar/efectos/jorcoin.png"
+            alt="JorCoin"
+            width={20}
+            height={20}
+            className={cn("shrink-0", className)}
+            style={{ imageRendering: 'pixelated' }}
+        />
     )
 }
