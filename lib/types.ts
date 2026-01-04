@@ -241,6 +241,8 @@ export interface LevelData {
   hints?: string[]
   xpReward?: number
   treasureFragment?: TreasureFragmentConfig
+  uiObjectiveText?: string   // Custom objective text shown in UI (includes tool requirements)
+  jorcMessage?: string       // Jorc's pedagogical message for this level (2-3 sentences)
 }
 
 export interface ExecutionResult {

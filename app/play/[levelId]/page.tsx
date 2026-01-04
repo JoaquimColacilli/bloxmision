@@ -196,9 +196,11 @@ export default function PlayPage() {
   const [jorcMessage, setJorcMessage] = useState<string>("")
 
   // Inicializar mensaje de intro cuando cambia el nivel
+  // Use custom jorcMessage from level config if available, otherwise use world-based message
   useEffect(() => {
-    setJorcMessage(jorcMessages.intro)
-  }, [jorcMessages.intro])
+    const customMessage = levelData.jorcMessage
+    setJorcMessage(customMessage || jorcMessages.intro)
+  }, [levelData.jorcMessage, jorcMessages.intro])
 
   const [showTutorial, setShowTutorial] = useState(false)
 
@@ -410,8 +412,8 @@ export default function PlayPage() {
     resetEngine()
     setJorcExpression("happy")
     setJorcMood("intro")
-    setJorcMessage(jorcMessages.intro)
-  }, [resetEngine, jorcMessages.intro])
+    setJorcMessage(levelData.jorcMessage || jorcMessages.intro)
+  }, [resetEngine, levelData.jorcMessage, jorcMessages.intro])
 
   const handleBlockSelect = useCallback(
     (block: BlockDefinition) => {
