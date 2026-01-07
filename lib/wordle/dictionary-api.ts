@@ -47,9 +47,7 @@ function normalizeSpanishForLookup(input: string): string {
  * AbortSignal.timeout exists in modern runtimes, but not all.
  */
 function timeoutSignal(ms: number): AbortSignal {
-    // @ts-expect-error - TS lib may not include AbortSignal.timeout depending on target
     if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
-        // @ts-expect-error
         return AbortSignal.timeout(ms)
     }
 
