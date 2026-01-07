@@ -27,6 +27,7 @@ const navItems = [
   { href: "/", label: "Inicio" },
   { href: "/worlds", label: "Islas" },
   { href: "/aprender", label: "Academia" },
+  { href: "/desafio", label: "Desafío" },
   { href: "/map", label: "Mapa del Tesoro" },
   { href: "/profile", label: "Mi Perfil" },
 ]

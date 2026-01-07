@@ -165,6 +165,28 @@ service cloud.firestore {
         // DELETE: Not allowed
         allow delete: if false;
       }
+      
+      // ============================================
+      // DAILY CHALLENGE SUBCOLLECTION (Wordle Game)
+      // /users/{uid}/dailyChallenge/{dayNumber}
+      // Tracks daily challenge progress and rewards
+      // ============================================
+      
+      match /dailyChallenge/{dayNumber} {
+        // READ: Only own progress
+        allow read: if isOwner(userId);
+        
+        // CREATE/UPDATE: Valid daily challenge progress
+        allow create, update: if isOwner(userId)
+          && request.resource.data.dayNumber is number
+          && request.resource.data.status in ['playing', 'won', 'lost']
+          && request.resource.data.attempts is number
+          && request.resource.data.attempts >= 0
+          && request.resource.data.attempts <= 6;
+        
+        // DELETE: Not allowed
+        allow delete: if false;
+      }
     }
     
     // ============================================
