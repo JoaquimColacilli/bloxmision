@@ -146,6 +146,25 @@ service cloud.firestore {
         // IMMUTABLE: No updates or deletes
         allow update, delete: if false;
       }
+      
+      // ============================================
+      // LESSON PROGRESS SUBCOLLECTION (Academy 2.0)
+      // /users/{uid}/lessonProgress/{lessonId}
+      // Tracks lesson completion, stars, rewards
+      // ============================================
+      
+      match /lessonProgress/{lessonId} {
+        // READ: Only own progress
+        allow read: if isOwner(userId);
+        
+        // CREATE/UPDATE: Valid lesson progress
+        allow create, update: if isOwner(userId)
+          && request.resource.data.lessonId == lessonId
+          && request.resource.data.userId == userId;
+        
+        // DELETE: Not allowed
+        allow delete: if false;
+      }
     }
     
     // ============================================

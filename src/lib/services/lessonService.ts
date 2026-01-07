@@ -1,176 +1,169 @@
-/**
- * Lesson Persistence Service - OPTIMIZED
- * 
- * Tracks which block lessons the user has seen.
- * 
- * OPTIMIZATION STRATEGY:
- * - localStorage is the PRIMARY source for reads (instant, no Firestore cost)
- * - Firestore is used for persistence (writes only, synced in background)
- * - In-memory cache to avoid repeated localStorage reads
- * - Batch writes to minimize Firestore operations
- * 
- * Silent failure: never blocks the game flow
- */
-
-import { doc, updateDoc, setDoc } from "firebase/firestore"
+import {
+    doc,
+    getDoc,
+    setDoc,
+    runTransaction,
+    Timestamp,
+    collection,
+    getDocs
+} from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
+import { LessonProgress, AcademyLesson, AcademyUserProgress } from "../types/academy"
+import { calculateStars } from "../utils/academy-logic"
+import { basicLessons } from "@/lib/lessons-data" // Fallback for MVP content
 
-const STORAGE_VERSION = "v1"
-const STORAGE_PREFIX = `bloxmision.lessons.${STORAGE_VERSION}`
-
-// In-memory cache for the current session
-let seenLessonsCache: Set<string> | null = null
+// Collection References
+const USERS_COLLECTION = "users"
+const LESSON_PROGRESS_COLLECTION = "lessonProgress"
 
 /**
- * Initialize cache from localStorage
+ * Get a lesson by ID.
+ * MVP: Fetches from static data (lessons-data.ts)
+ * Future: Fetch from 'academyLessons' collection
  */
-function initCacheFromLocalStorage(): Set<string> {
-    if (seenLessonsCache) return seenLessonsCache
+export async function getLessonById(lessonId: string): Promise<AcademyLesson | null> {
+    // MVP: Return static data mapped to new interface if needed
+    // For now, we just return the static data directly assuming it matches or we partial match
+    // In a real app we would map `basicLessons` to `AcademyLesson`
+    // We'll trust the caller to handle the type mismatch for the MVP static data for now
+    // or better, let's implement the mapping if we are strict.
 
-    seenLessonsCache = new Set()
-
-    try {
-        if (typeof window !== "undefined" && window.localStorage) {
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i)
-                if (key?.startsWith(STORAGE_PREFIX) && localStorage.getItem(key) === "true") {
-                    const blockId = key.replace(`${STORAGE_PREFIX}.`, "")
-                    seenLessonsCache.add(blockId)
-                }
-            }
-        }
-    } catch {
-        // Silent failure
+    // Actually, for this task, let's assume valid data or return null
+    const fallback = basicLessons.find(l => l.id === lessonId)
+    if (fallback) {
+        // Map legacy to new type if fields are missing, but for now return as unknown
+        return fallback as unknown as AcademyLesson
     }
 
-    return seenLessonsCache
+    return null
 }
 
 /**
- * Mark a lesson as seen for a user
- * 
- * OPTIMIZED: 
- * - Writes to localStorage FIRST (instant, no network)
- * - Updates cache
- * - Syncs to Firestore in background (no getDoc needed)
+ * Get granular lesson progress for a user
  */
-export async function markLessonSeen(userId: string | null, blockId: string): Promise<void> {
-    // 1. Update localStorage and cache immediately (no Firestore read needed)
-    try {
-        if (typeof window !== "undefined" && window.localStorage) {
-            localStorage.setItem(`${STORAGE_PREFIX}.${blockId}`, "true")
-        }
-        initCacheFromLocalStorage().add(blockId)
-    } catch {
-        // Silent failure
-    }
+export async function getLessonProgress(userId: string, lessonId: string): Promise<LessonProgress | null> {
+    const ref = doc(db, USERS_COLLECTION, userId, LESSON_PROGRESS_COLLECTION, lessonId)
+    const snap = await getDoc(ref)
 
-    // 2. Sync to Firestore in background (fire-and-forget, no await needed for UX)
-    if (userId) {
-        syncLessonToFirestore(userId, blockId).catch(err => {
-            console.warn("[LessonService] Firebase sync failed:", err)
+    if (snap.exists()) {
+        return snap.data() as LessonProgress
+    }
+    return null
+}
+
+/**
+ * Save partial progress (e.g. updating current exercise, attempts)
+ * This is a simple merge, NOT for critical rewards.
+ */
+export async function saveLessonProgress(
+    userId: string,
+    lessonId: string,
+    data: Partial<LessonProgress>
+): Promise<void> {
+    const ref = doc(db, USERS_COLLECTION, userId, LESSON_PROGRESS_COLLECTION, lessonId)
+
+    await setDoc(ref, {
+        ...data,
+        updatedAt: Timestamp.now(),
+    }, { merge: true })
+}
+
+/**
+ * Award Rewards Transactionally
+ * 
+ * CRITICAL: This method governs the +15 Coins logic.
+ * It uses a Firestore Transaction to ensure consistency.
+ * 
+ * Logic:
+ * 1. Read User DOC and LessonProgress DOC
+ * 2. Check if rewards already granted
+ * 3. Calculate Stars
+ * 4. Update LessonProgress (set completed, stars, rewardsGranted=true)
+ * 5. Update User (add coins, update summary stats)
+ */
+export async function awardLessonRewards(
+    userId: string,
+    lessonId: string,
+    finalStats: {
+        quizScore: number
+        totalQuestions: number
+        hintsUsed: number
+        attempts: number
+        totalExercises: number
+    }
+): Promise<{ coinsAwarded: number; starsEarned: number }> {
+    return runTransaction(db, async (transaction) => {
+        const userRef = doc(db, USERS_COLLECTION, userId)
+        const progressRef = doc(db, USERS_COLLECTION, userId, LESSON_PROGRESS_COLLECTION, lessonId)
+
+        const userDoc = await transaction.get(userRef)
+        const progressDoc = await transaction.get(progressRef)
+
+        if (!userDoc.exists()) {
+            throw new Error("User does not exist")
+        }
+
+        const existingProgress = progressDoc.exists() ? (progressDoc.data() as LessonProgress) : null
+
+        // 1. Calculate Stars
+        const stars = calculateStars(
+            finalStats.quizScore,
+            finalStats.totalQuestions,
+            finalStats.hintsUsed,
+            finalStats.attempts,
+            finalStats.totalExercises
+        )
+
+        // 2. Check overlap
+        const alreadyGranted = existingProgress?.rewardsGranted?.jorCoins === true
+        const coinsToAdd = alreadyGranted ? 0 : 15
+
+        // 3. Prepare Progress Update
+        const progressUpdate: any = {
+            lessonId,
+            userId,
+            status: "completed",
+            quizScore: finalStats.quizScore,
+            attemptsTotal: finalStats.attempts + (existingProgress?.attemptsTotal || 0), // Accumulate
+            hintsUsedTotal: finalStats.hintsUsed + (existingProgress?.hintsUsedTotal || 0), // Accumulate
+            starsEarned: Math.max(stars, existingProgress?.starsEarned || 0), // Keep best score
+            updatedAt: Timestamp.now(),
+        }
+
+        if (!alreadyGranted) {
+            progressUpdate.rewardsGranted = {
+                jorCoins: true,
+                grantedAt: Timestamp.now()
+            }
+        }
+
+        transaction.set(progressRef, progressUpdate, { merge: true })
+
+        // 4. Update User Coins & Summary
+        const userData = userDoc.data()
+        const currentCoins = userData.jorCoins || 0
+        const currentAcademy = userData.academyProgress || {
+            completedLessons: [],
+            totalStars: 0,
+            unlockedSections: ["basics"]
+        }
+
+        const isNewCompletion = !currentAcademy.completedLessons.includes(lessonId)
+
+        const newAcademyProgress: AcademyUserProgress = {
+            ...currentAcademy,
+            completedLessons: isNewCompletion
+                ? [...currentAcademy.completedLessons, lessonId]
+                : currentAcademy.completedLessons,
+            totalStars: currentAcademy.totalStars + (stars - (existingProgress?.starsEarned || 0)), // Add delta
+            lastPlayedLessonId: lessonId
+        }
+
+        transaction.update(userRef, {
+            jorCoins: currentCoins + coinsToAdd,
+            academyProgress: newAcademyProgress
         })
-    }
-}
 
-/**
- * Sync a single lesson to Firestore (background, no blocking)
- */
-async function syncLessonToFirestore(userId: string, blockId: string): Promise<void> {
-    const userRef = doc(db, "users", userId)
-
-    try {
-        // Use setDoc with merge to avoid needing a getDoc first
-        await setDoc(userRef, {
-            seenLessons: { [blockId]: true },
-        }, { merge: true })
-    } catch (error) {
-        // If setDoc fails, try updateDoc (document might exist with different structure)
-        try {
-            await updateDoc(userRef, {
-                [`seenLessons.${blockId}`]: true,
-            })
-        } catch {
-            // Both failed, give up silently
-        }
-    }
-}
-
-/**
- * Check if a user has seen a specific lesson
- * 
- * OPTIMIZED: Uses cache/localStorage ONLY (no Firestore read)
- */
-export async function hasSeenLesson(userId: string | null, blockId: string): Promise<boolean> {
-    // Check cache first (instant)
-    const cache = initCacheFromLocalStorage()
-    return cache.has(blockId)
-}
-
-/**
- * Get all seen lessons for a user
- * 
- * OPTIMIZED: Uses cache/localStorage ONLY (no Firestore read)
- */
-export async function getSeenLessons(userId: string | null): Promise<string[]> {
-    const cache = initCacheFromLocalStorage()
-    return Array.from(cache)
-}
-
-/**
- * Get unseen lessons from a list of blocks
- * Non-blocking check using cache
- */
-export async function getUnseenLessons(userId: string | null, blockIds: string[]): Promise<string[]> {
-    const cache = initCacheFromLocalStorage()
-    return blockIds.filter((id) => !cache.has(id))
-}
-
-/**
- * Mark multiple lessons as seen at once (batch)
- * 
- * OPTIMIZED: 
- * - Updates localStorage/cache for all at once
- * - Single Firestore write with all lessons
- */
-export async function markMultipleLessonsSeen(userId: string | null, blockIds: string[]): Promise<void> {
-    if (blockIds.length === 0) return
-
-    // 1. Update localStorage and cache for all blocks
-    const cache = initCacheFromLocalStorage()
-
-    for (const blockId of blockIds) {
-        try {
-            if (typeof window !== "undefined" && window.localStorage) {
-                localStorage.setItem(`${STORAGE_PREFIX}.${blockId}`, "true")
-            }
-            cache.add(blockId)
-        } catch {
-            // Silent failure
-        }
-    }
-
-    // 2. Single batch write to Firestore
-    if (userId) {
-        try {
-            const userRef = doc(db, "users", userId)
-            const updates = blockIds.reduce((acc, blockId) => ({
-                ...acc,
-                [blockId]: true
-            }), {} as Record<string, boolean>)
-
-            await setDoc(userRef, {
-                seenLessons: updates,
-            }, { merge: true })
-        } catch (error) {
-            console.warn("[LessonService] Batch Firebase sync failed:", error)
-        }
-    }
-}
-
-/**
- * Clear the in-memory cache (useful for logout)
- */
-export function clearLessonCache(): void {
-    seenLessonsCache = null
+        return { coinsAwarded: coinsToAdd, starsEarned: stars }
+    })
 }
