@@ -55,6 +55,7 @@ interface InteractiveDemoPanelProps {
     code?: string[]
     steps?: DemoStep[]
     targetPosition?: { x: number; y: number } | null
+    obstacle?: { x: number; y: number } | null
 }
 
 export function InteractiveDemoPanel({
@@ -66,7 +67,8 @@ export function InteractiveDemoPanel({
         { jorcState: { x: 1, y: 0, facing: "south" }, message: "'Girar' → Jorc gira 90° a la derecha.", highlightLine: 1 },
         { jorcState: { x: 1, y: 1, facing: "south" }, message: "'Avanzar' → Jorc camina hacia abajo. ¡Listo!", highlightLine: 2 }
     ],
-    targetPosition = null
+    targetPosition = null,
+    obstacle = null
 }: InteractiveDemoPanelProps) {
     // State
     const [currentStepIndex, setCurrentStepIndex] = useState(0)
@@ -214,13 +216,14 @@ export function InteractiveDemoPanel({
                     {cells.map(cell => {
                         const isJorcHere = cell.x === currentStep.jorcState.x && cell.y === currentStep.jorcState.y
                         const isTargetHere = targetPosition && cell.x === targetPosition.x && cell.y === targetPosition.y
+                        const isObstacleHere = obstacle && cell.x === obstacle.x && cell.y === obstacle.y
 
                         return (
                             <div
                                 key={`${cell.x}-${cell.y}`}
                                 className={cn(
                                     "aspect-square rounded-lg relative",
-                                    isJorcHere ? "bg-ocean-300/60" : "bg-sky-100"
+                                    isJorcHere ? "bg-ocean-300/60" : isObstacleHere ? "bg-red-100" : "bg-sky-100"
                                 )}
                             >
                                 {/* Jorc sprite */}
@@ -235,13 +238,20 @@ export function InteractiveDemoPanel({
                                     />
                                 )}
 
+                                {/* Obstacle (rock) */}
+                                {isObstacleHere && !isJorcHere && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-2xl">🪨</span>
+                                    </div>
+                                )}
+
                                 {/* Target (treasure) - only show if not occupied by Jorc */}
-                                {isTargetHere && !isJorcHere && (
+                                {isTargetHere && !isJorcHere && !isObstacleHere && (
                                     <div className="absolute inset-2 rounded bg-amber-500 border-2 border-amber-700 shadow-sm" />
                                 )}
 
                                 {/* Empty cell indicator */}
-                                {!isJorcHere && !isTargetHere && (
+                                {!isJorcHere && !isTargetHere && !isObstacleHere && (
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="size-1.5 rounded-full bg-ocean-300/40" />
                                     </div>
@@ -313,29 +323,46 @@ export function InteractiveDemoPanel({
                     <span className="text-xs text-slate-400 ml-2">programa_pirata.js</span>
                 </div>
 
-                {/* Code lines - ALWAYS show all lines */}
+                {/* Code lines - ALWAYS show all lines with visual structure */}
                 <div className="flex-1 p-5 font-mono text-sm">
                     {code.map((line, index) => {
                         const isHighlighted = currentStep.highlightLine === index
                         const wasExecuted = index < currentStep.highlightLine
+                        const isIndented = line.startsWith('  ')
+                        const trimmedLine = line.trimStart()
+
+                        // Check if next line is indented (this line is a parent block)
+                        const nextLine = code[index + 1]
+                        const isParentBlock = nextLine && nextLine.startsWith('  ') && !line.startsWith('  ')
 
                         return (
                             <div
                                 key={index}
                                 className={cn(
-                                    "flex items-center px-3 py-2 rounded-lg mb-1 transition-all duration-200",
-                                    isHighlighted && "bg-yellow-500/20 border-l-4 border-yellow-400",
-                                    wasExecuted && "opacity-40"
+                                    "flex items-center rounded-lg transition-all duration-200 relative",
+                                    isHighlighted && "bg-yellow-500/20",
+                                    wasExecuted && "opacity-40",
+                                    isIndented ? "ml-4 pl-3 border-l-2 border-slate-600 py-1.5" : "px-3 py-2",
+                                    isParentBlock && "mb-0"
                                 )}
                             >
                                 <span className="w-6 text-right text-slate-500 select-none mr-4 text-xs">
                                     {index + 1}
                                 </span>
+
+                                {/* Bracket indicator for parent blocks */}
+                                {isParentBlock && (
+                                    <span className="text-purple-400 mr-1">{'{'}</span>
+                                )}
+
                                 <span className={cn(
-                                    isHighlighted ? "text-yellow-200 font-bold" : "text-slate-300"
+                                    isHighlighted ? "text-yellow-200 font-bold" :
+                                        isIndented ? "text-cyan-300" : "text-slate-300",
+                                    isParentBlock && "text-purple-300"
                                 )}>
-                                    {line}
+                                    {trimmedLine}
                                 </span>
+
                                 {isHighlighted && (
                                     <span className="ml-4 text-xs text-yellow-400 animate-pulse">
                                         ← ejecutando

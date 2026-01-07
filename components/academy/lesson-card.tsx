@@ -6,10 +6,10 @@ import Link from "next/link"
 import { Lock, Check, Clock, ChevronRight } from "lucide-react"
 import * as Icons from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Lesson } from "@/lib/types"
 
+// Using any to support both old and new lesson formats during migration
 interface LessonCardProps {
-  lesson: Lesson
+  lesson: any
   isUnlocked: boolean
   isCompleted: boolean
 }
@@ -34,7 +34,7 @@ export function LessonCard({ lesson, isUnlocked, isCompleted }: LessonCardProps)
 
   return (
     <Link
-      href={`/aprender/leccion/${lesson.id}`}
+      href={`/academia/lesson/${lesson.id}`}
       className={cn(
         "flex items-center gap-4 rounded-xl border-2 p-4 transition-all hover:shadow-md",
         isCompleted

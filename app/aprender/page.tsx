@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import Link from "next/link"
 import { BookOpen, Repeat, GitBranch, Search, GraduationCap, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,14 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LessonCard } from "@/components/academy/lesson-card"
 import { useAcademy } from "@/contexts/academy-context"
-import { basicLessons, loopLessons, conditionalLessons, glossary, isLessonUnlocked } from "@/lib/lessons-data"
+import { basicLessons, loopLessons, conditionalLessons, glossary, isLessonUnlocked, allLessons } from "@/lib/lessons-data"
 
 function AcademyContent() {
-  const { progress, isLessonCompleted } = useAcademy()
+  const { progress, isLessonCompleted, refreshProgress } = useAcademy()
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("lecciones")
 
-  const completedWorlds = 1 // Mock - would come from user progress
+  // Refresh progress from Firestore when page loads (handles navigation without full reload)
+  useEffect(() => {
+    refreshProgress()
+  }, [refreshProgress])
 
   const filteredGlossary = Object.entries(glossary).reduce(
     (acc, [letter, terms]) => {
@@ -32,9 +35,13 @@ function AcademyContent() {
     {} as typeof glossary,
   )
 
-  const totalLessons = basicLessons.length + loopLessons.length + conditionalLessons.length
-  const completedCount = progress.completedLessons.length
-  const progressPercent = Math.round((completedCount / totalLessons) * 100)
+  // Use allLessons as source of truth for total, and deduplicate completed
+  const totalLessons = allLessons.length
+  // Only count lessons that actually exist in our lesson data
+  const validLessonIds = new Set(allLessons.map(l => l.id))
+  const uniqueCompletedLessons = [...new Set(progress.completedLessons)].filter(id => validLessonIds.has(id))
+  const completedCount = uniqueCompletedLessons.length
+  const progressPercent = Math.min(100, Math.round((completedCount / totalLessons) * 100))
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-50 to-sand-50">
@@ -104,7 +111,7 @@ function AcademyContent() {
                   <LessonCard
                     key={lesson.id}
                     lesson={lesson}
-                    isUnlocked={isLessonUnlocked(lesson, progress.completedLessons, completedWorlds)}
+                    isUnlocked={isLessonUnlocked(lesson.id, progress.completedLessons)}
                     isCompleted={isLessonCompleted(lesson.id)}
                   />
                 ))}
@@ -123,7 +130,7 @@ function AcademyContent() {
                   <LessonCard
                     key={lesson.id}
                     lesson={lesson}
-                    isUnlocked={isLessonUnlocked(lesson, progress.completedLessons, completedWorlds)}
+                    isUnlocked={isLessonUnlocked(lesson.id, progress.completedLessons)}
                     isCompleted={isLessonCompleted(lesson.id)}
                   />
                 ))}
@@ -142,7 +149,7 @@ function AcademyContent() {
                   <LessonCard
                     key={lesson.id}
                     lesson={lesson}
-                    isUnlocked={isLessonUnlocked(lesson, progress.completedLessons, completedWorlds)}
+                    isUnlocked={isLessonUnlocked(lesson.id, progress.completedLessons)}
                     isCompleted={isLessonCompleted(lesson.id)}
                   />
                 ))}

@@ -180,6 +180,7 @@ export default function LessonPage() {
                                 highlightLine: step.activeLineIndex
                             }))}
                             targetPosition={null}
+                            obstacle={lesson.content.demo.obstacle || null}
                         />
                         <div className="flex justify-end">
                             <Button onClick={() => { markTabComplete("demo"); setCurrentTab("practice") }} variant="outline">

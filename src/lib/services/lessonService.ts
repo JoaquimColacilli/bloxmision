@@ -10,7 +10,7 @@ import {
 import { db } from "@/src/lib/firebase"
 import { LessonProgress, AcademyLesson, AcademyUserProgress } from "../types/academy"
 import { calculateStars } from "../utils/academy-logic"
-import { basicLessons } from "@/lib/lessons-data" // Fallback for MVP content
+import { allLessons } from "@/lib/lessons-data" // All lessons in unified array
 
 // Collection References
 const USERS_COLLECTION = "users"
@@ -18,23 +18,13 @@ const LESSON_PROGRESS_COLLECTION = "lessonProgress"
 
 /**
  * Get a lesson by ID.
- * MVP: Fetches from static data (lessons-data.ts)
- * Future: Fetch from 'academyLessons' collection
+ * Searches through all lessons (basic, loop, conditional)
  */
 export async function getLessonById(lessonId: string): Promise<AcademyLesson | null> {
-    // MVP: Return static data mapped to new interface if needed
-    // For now, we just return the static data directly assuming it matches or we partial match
-    // In a real app we would map `basicLessons` to `AcademyLesson`
-    // We'll trust the caller to handle the type mismatch for the MVP static data for now
-    // or better, let's implement the mapping if we are strict.
-
-    // Actually, for this task, let's assume valid data or return null
-    const fallback = basicLessons.find(l => l.id === lessonId)
-    if (fallback) {
-        // Map legacy to new type if fields are missing, but for now return as unknown
-        return fallback as unknown as AcademyLesson
+    const lesson = allLessons.find(l => l.id === lessonId)
+    if (lesson) {
+        return lesson as unknown as AcademyLesson
     }
-
     return null
 }
 
