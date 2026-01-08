@@ -1107,15 +1107,23 @@ export function getLevelConfig(levelId: string): LevelData {
   // Alias: tutorial => 1-1 (manteniendo el id solicitado)
   if (levelId === "tutorial") {
     const base = LEVELS["1-1"]
-    return { ...base, id: "tutorial" }
+    return { ...base, id: "tutorial", theme: "default" }
+  }
+
+  // Derive theme from world prefix
+  const worldPrefix = levelId.split("-")[0]
+  const deriveTheme = (): "default" | "night" | "reef" => {
+    if (worldPrefix === "3") return "reef"
+    if (worldPrefix === "2") return "night"
+    return "default"
   }
 
   const found = LEVELS[levelId]
-  if (found) return found
+  if (found) return { ...found, theme: found.theme || deriveTheme() }
 
   // Check bonus levels
   const bonus = BONUS_LEVELS[levelId]
-  if (bonus) return bonus
+  if (bonus) return { ...bonus, theme: bonus.theme || deriveTheme() }
 
   // Default fallback for unknown levels
   return {
@@ -1128,6 +1136,7 @@ export function getLevelConfig(levelId: string): LevelData {
     collectibles: [],
     availableBlocks: ["forward", "turn-right", "turn-left"],
     hints: ["No encontré configuración para este nivel."],
+    theme: deriveTheme(),
   }
 }
 

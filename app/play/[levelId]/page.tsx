@@ -716,7 +716,7 @@ export default function PlayPage() {
             showPath={showPath}
             onCellClick={handleCellClick}
             showCoordinates={true}
-            theme={Number(worldNumericId) >= 2 ? "night" : "default"}
+            theme={levelConfig.theme}
           />
           <div className="absolute right-4 top-4 z-10">
             <LearningSidebar levelId={levelId} />

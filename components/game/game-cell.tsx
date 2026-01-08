@@ -6,7 +6,7 @@ import { memo, useState, useEffect } from "react"
 import type { TileType, Entity, Direction } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-export type GameTheme = "default" | "night"
+export type GameTheme = "default" | "night" | "reef"
 
 interface GameCellProps {
   x: number
@@ -24,22 +24,27 @@ const tileStyles: Record<TileType, Record<GameTheme, string>> = {
   water: {
     default: "bg-blue-400",
     night: "bg-blue-900",
+    reef: "bg-[#0B1628]", // Deep ocean
   },
   sand: {
     default: "bg-amber-200",
     night: "bg-amber-900/60",
+    reef: "bg-[#1A4D52]", // Sandy with algae tint
   },
   grass: {
     default: "bg-green-400",
     night: "bg-green-900",
+    reef: "bg-[#00A896]", // Seaweed green
   },
   rock: {
     default: "bg-stone-400",
     night: "bg-stone-700",
+    reef: "bg-[#2D3A4A]", // Dark reef rock
   },
   wood: {
     default: "bg-amber-600",
     night: "bg-amber-800",
+    reef: "bg-[#5D4037]", // Shipwreck wood
   },
 }
 
@@ -62,12 +67,22 @@ const directionRotation: Record<Direction, string> = {
   west: "rotate-180",
 }
 
-// Sprites del barco según la dirección
+// Sprites del barco según la dirección (World 1 & 2)
 const boatSprites: Record<Direction, string> = {
   north: "/sprites/boat_raw/frame-05.png",
   east: "/sprites/boat_raw/frame-06.png",
   south: "/sprites/boat_raw/frame-07.png",
   west: "/sprites/boat_raw/frame-08.png",
+}
+
+// Sprites de Jorc según la dirección (World 3 - Reef)
+// IMPORTANT: Each direction uses ONE consistent sprite set. No mixing.
+// WEST uses EAST sprites with CSS mirror (no dedicated LEFT set exists)
+const jorcSprites: Record<Direction, { src: string; mirror: boolean }> = {
+  north: { src: "/sprites/jorc_looking_up/action-01.png", mirror: false },
+  south: { src: "/sprites/jorc_raw/action-01.png", mirror: false },
+  east: { src: "/sprites/jorc_raw/action-13.png", mirror: false },
+  west: { src: "/sprites/jorc_raw/action-13.png", mirror: true },
 }
 
 // Sprites del Kraken según la dirección de ataque (idle por defecto)
@@ -127,6 +142,20 @@ function GameCellComponent({
 
   const tileStyle = tileStyles[tileType]?.[theme] || tileStyles[tileType]?.default || "bg-blue-400"
 
+  // Border color based on theme
+  const borderColor = theme === "night"
+    ? "border-cyan-900/50"
+    : theme === "reef"
+      ? "border-cyan-800/40"
+      : "border-black/10"
+
+  // Path ring color based on theme
+  const pathRing = theme === "night"
+    ? "ring-2 ring-inset ring-cyan-400/60"
+    : theme === "reef"
+      ? "ring-2 ring-inset ring-teal-400/50"
+      : "ring-2 ring-inset ring-gold-400/60"
+
   return (
     <div
       role="gridcell"
@@ -137,10 +166,10 @@ function GameCellComponent({
       className={cn(
         "relative flex items-center justify-center border transition-all",
         tileStyle,
-        theme === "night" ? "border-cyan-900/50" : "border-black/10",
+        borderColor,
         onClick &&
         "cursor-pointer hover:brightness-110 focus:ring-2 focus:ring-gold-400 focus:ring-offset-1 focus:outline-none",
-        isPath && (theme === "night" ? "ring-2 ring-inset ring-cyan-400/60" : "ring-2 ring-inset ring-gold-400/60"),
+        isPath && pathRing,
       )}
       style={{ width: cellSize, height: cellSize }}
     >
@@ -152,12 +181,22 @@ function GameCellComponent({
         </div>
       )}
 
+      {/* Reef theme bubble effect (subtle, not distracting) */}
+      {theme === "reef" && Math.random() > 0.92 && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div
+            className="absolute w-1 h-1 rounded-full bg-cyan-300/20 animate-pulse"
+            style={{ top: `${20 + Math.random() * 60}%`, left: `${20 + Math.random() * 60}%` }}
+          />
+        </div>
+      )}
+
       {/* Path direction indicator */}
       {isPath && pathDirection && (
         <div
           className={cn(
             "absolute inset-0 flex items-center justify-center pointer-events-none",
-            theme === "night" ? "text-cyan-400/70" : "text-gold-500/70",
+            theme === "night" ? "text-cyan-400/70" : theme === "reef" ? "text-teal-300/60" : "text-gold-500/70",
             directionRotation[pathDirection],
           )}
           aria-hidden="true"
@@ -183,8 +222,38 @@ function GameCellComponent({
         </div>
       )}
 
-      {/* Entity rendering (non-Kraken, non-Jorc) */}
-      {entity && entity.type !== "jorc" && entity.type !== "kraken" && !entity.collected && (
+      {/* Rock/Obstacle rendering - CSS styled for reef, emoji for others */}
+      {entity?.type === "rock" && !entity.collected && (
+        theme === "reef" ? (
+          // Reef theme: Coral-styled obstacle (no emoji)
+          <div
+            className="absolute inset-[12%] rounded-lg bg-gradient-to-br from-rose-400 via-pink-500 to-rose-600 shadow-lg border-2 border-rose-300/50"
+            style={{
+              boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.3)'
+            }}
+            aria-label="Coral - Obstáculo"
+          >
+            {/* Coral texture dots */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-200/60 absolute top-[20%] left-[25%]" />
+              <div className="w-1 h-1 rounded-full bg-rose-200/40 absolute top-[50%] left-[60%]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-200/50 absolute top-[70%] left-[35%]" />
+            </div>
+          </div>
+        ) : (
+          // Default/Night theme: Emoji rock
+          <span
+            className="text-[60%] sm:text-[70%] drop-shadow-sm select-none"
+            style={{ fontSize: cellSize * 0.5 }}
+            aria-hidden="true"
+          >
+            {entityIcons.rock}
+          </span>
+        )
+      )}
+
+      {/* Other entity rendering (non-Kraken, non-Jorc, non-Rock) */}
+      {entity && entity.type !== "jorc" && entity.type !== "kraken" && entity.type !== "rock" && !entity.collected && (
         <span
           className="text-[60%] sm:text-[70%] drop-shadow-sm select-none"
           style={{ fontSize: cellSize * 0.5 }}
@@ -194,23 +263,43 @@ function GameCellComponent({
         </span>
       )}
 
-      {/* Barco/Jorc character */}
+      {/* Character rendering: Jorc (reef) or Boat (default/night) */}
       {entity?.type === "jorc" && (
-        <div
-          className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
-          aria-label={`Barco mirando al ${entity.facing || "este"}`}
-        >
-          <img
-            src={boatSprites[entity.facing || "east"]}
-            alt={`Barco mirando al ${entity.facing || "este"}`}
-            className="w-[90%] h-[90%] object-contain drop-shadow-md"
-            style={{ imageRendering: "pixelated" }}
-          />
-        </div>
+        theme === "reef" ? (
+          // Reef theme: Jorc character with directional sprites
+          <div
+            className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
+            aria-label={`Jorc mirando al ${entity.facing || "este"}`}
+          >
+            <img
+              src={jorcSprites[entity.facing || "east"].src}
+              alt={`Jorc mirando al ${entity.facing || "este"}`}
+              className="w-[95%] h-[95%] object-contain drop-shadow-md"
+              style={{
+                imageRendering: "pixelated",
+                transform: jorcSprites[entity.facing || "east"].mirror ? "scaleX(-1)" : undefined
+              }}
+            />
+          </div>
+        ) : (
+          // Default/Night theme: Boat
+          <div
+            className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
+            aria-label={`Barco mirando al ${entity.facing || "este"}`}
+          >
+            <img
+              src={boatSprites[entity.facing || "east"]}
+              alt={`Barco mirando al ${entity.facing || "este"}`}
+              className="w-[90%] h-[90%] object-contain drop-shadow-md"
+              style={{ imageRendering: "pixelated" }}
+            />
+          </div>
+        )
       )}
     </div>
   )
 }
 
 export const GameCell = memo(GameCellComponent)
+
 

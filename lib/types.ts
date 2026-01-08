@@ -243,6 +243,7 @@ export interface LevelData {
   treasureFragment?: TreasureFragmentConfig
   uiObjectiveText?: string   // Custom objective text shown in UI (includes tool requirements)
   jorcMessage?: string       // Jorc's pedagogical message for this level (2-3 sentences)
+  theme?: "default" | "night" | "reef"  // Visual theme for the level grid
 }
 
 export interface ExecutionResult {

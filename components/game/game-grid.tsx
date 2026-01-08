@@ -20,7 +20,7 @@ interface GameGridProps {
   onRetry?: () => void
   className?: string
   showCoordinates?: boolean
-  theme?: "default" | "night"
+  theme?: "default" | "night" | "reef"
 }
 
 function getPathDirection(current: PathStep, next?: PathStep): Direction | undefined {
