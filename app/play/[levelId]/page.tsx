@@ -131,22 +131,40 @@ export default function PlayPage() {
   const jorcMessages = useMemo(() => getJorcMessages(worldNumericId, requestedLevelNum), [worldNumericId, requestedLevelNum])
 
   // Get cached progress from context
-  const { getMaxUnlockedLevel, isLoading: progressLoading, invalidateCache } = useProgress()
+  const { getMaxUnlockedLevel, isWorldUnlocked, isLoading: progressLoading, invalidateCache } = useProgress()
+
+  // Map numeric world ID to semantic for isWorldUnlocked check
+  const worldSemanticMap: Record<string, string> = {
+    "1": "secuencia",
+    "2": "bucle",
+    "3": "decision",
+    "4": "memoria",
+    "5": "funcion",
+  }
 
   // Level Access Check using cached progress (no Firestore read)
-  // NOTE: recalculateUserXP was removed to reduce Firestore reads.
+  // Now also checks if the WORLD itself is unlocked (cross-world gating)
   useEffect(() => {
     if (!user || progressLoading) return
 
-    // Use cached progress - no Firestore call needed
-    const maxLevel = getMaxUnlockedLevel(worldNumericId)
-    setMaxUnlockedLevel(maxLevel)
+    const worldSemanticId = worldSemanticMap[worldNumericId] || "secuencia"
+    const worldUnlocked = isWorldUnlocked(worldSemanticId)
 
-    if (requestedLevelNum > maxLevel) {
+    if (!worldUnlocked) {
+      // World itself is not unlocked - block access entirely
       setIsLevelLocked(true)
+      setMaxUnlockedLevel(1) // Show "go to level 1" option (of previous world in practice)
+    } else {
+      // World is unlocked, check level within world
+      const maxLevel = getMaxUnlockedLevel(worldNumericId)
+      setMaxUnlockedLevel(maxLevel)
+
+      if (requestedLevelNum > maxLevel) {
+        setIsLevelLocked(true)
+      }
     }
     setAccessCheckDone(true)
-  }, [user, worldNumericId, requestedLevelNum, progressLoading, getMaxUnlockedLevel])
+  }, [user, worldNumericId, requestedLevelNum, progressLoading, getMaxUnlockedLevel, isWorldUnlocked])
 
   useEffect(() => {
     if (newBlockIds.length > 0) {

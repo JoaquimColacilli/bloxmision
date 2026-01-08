@@ -638,7 +638,7 @@ const LEVELS: Record<string, LevelData> = {
   // WORLD 4 — MEMORIA / VARIABLES (4-1..4-12)
   // =========================
 
-  // 4-1 — Presenta variable como "contador" sencillo
+  // 4-1 — Nivel introductorio sin variable (placeholder removido)
   "4-1": level({
     id: "4-1",
     title: "Guardar en la Bitácora",
@@ -647,11 +647,11 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(3, 1), collectCoins(1)],
     obstacles: [],
     collectibles: [coin("c1", 1, 1)],
-    availableBlocks: ["forward", "collect-coin", "variable"],
+    availableBlocks: ["forward", "collect-coin"],
     optimalSolution: { blockCount: 4 },
-    hints: ["Nuevo: 'Variable'.", "Usala para guardar cuántas monedas llevás."],
-    uiObjectiveText: "Recogé 1 moneda y llegá a (3, 1) usando al menos 1 Variable y 1 Recoger moneda.",
-    jorcMessage: "¡Nueva herramienta: Variable! Usá este bloque para guardar información, como cuántas monedas recolectaste. Es tu bitácora personal.",
+    hints: ["Recogé la moneda en el camino.", "Llegá hasta el final del tablero."],
+    uiObjectiveText: "Recogé 1 moneda y llegá a (3, 1).",
+    jorcMessage: "¡Bienvenido al Santuario! Tu misión es simple: recogé la moneda y llegá a la meta. ¡Cada paso cuenta!",
   }),
 
   // 4-2 — Conteo de 2 monedas en línea
@@ -663,14 +663,14 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(4, 2), collectCoins(2)],
     obstacles: [],
     collectibles: [coin("c1", 1, 2), coin("c2", 3, 2)],
-    availableBlocks: ["forward", "collect-coin", "variable", "repeat"],
+    availableBlocks: ["forward", "collect-coin", "repeat"],
     optimalSolution: { blockCount: 6 },
-    hints: ["Contá en una variable: monedas = monedas + 1.", "Repeat te ahorra pasos."],
-    uiObjectiveText: "Recogé 2 monedas y llegá a (4, 2) usando al menos 1 Variable y 1 Repetir.",
-    jorcMessage: "Dos monedas en línea recta. Usá una 'Variable' para contar cuántas vas recolectando. 'Repetir' te ahorra bloques.",
+    hints: ["Usá Repetir para ahorrar bloques.", "Recogé cada moneda individualmente."],
+    uiObjectiveText: "Recogé 2 monedas y llegá a (4, 2) usando al menos 1 Repetir.",
+    jorcMessage: "Dos monedas en línea recta. Usá 'Repetir' para ahorrar bloques. ¡Cada moneda requiere su propio Recoger!",
   }),
 
-  // 4-3 — Variables + rocas (planificación con memoria)
+  // 4-3 — Rodear obstáculos
   "4-3": level({
     id: "4-3",
     title: "Registro de Ruta",
@@ -679,14 +679,14 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(4, 4)],
     obstacles: [rock(2, 2)],
     collectibles: [],
-    availableBlocks: ["forward", "turn-right", "turn-left", "variable", "repeat"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "repeat"],
     optimalSolution: { blockCount: 10 },
-    hints: ["Usá una variable para recordar el estado.", "Rodeá la roca."],
-    uiObjectiveText: "Llegá a la posición (4, 4) usando al menos 1 Variable.",
-    jorcMessage: "Hay una roca en el camino. Podés usar una Variable para recordar cuántos pasos diste o si ya giraste. ¡Experimentá!",
+    hints: ["Hay una roca en el medio.", "Rodeala con giros estratégicos."],
+    uiObjectiveText: "Llegá a la posición (4, 4) rodeando la roca.",
+    jorcMessage: "Hay una roca en el camino. Planificá tu ruta: ¿por arriba o por abajo? ¡Los giros son clave!",
   }),
 
-  // 4-4 — Fragmento 1 W4: monedas en línea con conteo
+  // 4-4 — Fragmento 1 W4: monedas en línea
   "4-4": level({
     id: "4-4",
     title: "Contador de Monedas",
@@ -695,15 +695,15 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(4, 2), collectCoins(3)],
     obstacles: [],
     collectibles: [coin("c1", 1, 2), coin("c2", 2, 2), coin("c3", 3, 2)],
-    availableBlocks: ["forward", "collect-coin", "variable", "repeat"],
+    availableBlocks: ["forward", "collect-coin", "repeat"],
     optimalSolution: { blockCount: 7 },
-    hints: ["Guardá el conteo en una variable.", "Repeat para el tramo recto."],
+    hints: ["Tres monedas en fila.", "Combiná Avanzar y Recoger dentro de Repetir."],
     treasureFragment: fragment(4, 1, "Isla Memoria"),
-    uiObjectiveText: "Recogé 3 monedas y llegá a (4, 2) usando al menos 1 Variable y 3 Recoger moneda.",
-    jorcMessage: "Tres monedas en fila. Usá una 'Variable' para llevar el conteo. Combiná con 'Repetir' para el tramo largo. ¡Fragmento de mapa!",
+    uiObjectiveText: "Recogé 3 monedas y llegá a (4, 2).",
+    jorcMessage: "Tres monedas en fila. Combiná 'Avanzar' y 'Recoger' dentro de 'Repetir' para ser eficiente. ¡Fragmento de mapa!",
   }),
 
-  // 4-5 — Variable + if-blocked (recuerda estado ante obstáculos)
+  // 4-5 — Obstáculos y decisiones
   "4-5": level({
     id: "4-5",
     title: "Memoria de Obstáculos",
@@ -712,14 +712,14 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(5, 3)],
     obstacles: [rock(2, 3), rock(3, 2)],
     collectibles: [],
-    availableBlocks: ["forward", "turn-right", "turn-left", "if-blocked", "variable", "repeat"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "if-blocked", "repeat"],
     optimalSolution: { blockCount: 14 },
-    hints: ["Podés guardar en variable si ya giraste.", "Si bloqueado te guía."],
-    uiObjectiveText: "Llegá a la posición (5, 3) usando al menos 1 Variable y 1 Si bloqueado.",
-    jorcMessage: "Hay rocas obstaculizando. Podés usar una Variable para recordar si ya giraste. 'Si Bloqueado' te ayuda a decidir.",
+    hints: ["Usá Si Bloqueado para detectar rocas.", "Combiná con Repetir para automatizar."],
+    uiObjectiveText: "Llegá a la posición (5, 3) usando al menos 1 Si bloqueado.",
+    jorcMessage: "Hay rocas obstaculizando. Usá 'Si Bloqueado' para detectarlas y girar automáticamente. ¡Navegación inteligente!",
   }),
 
-  // 4-6 — 3 monedas dispersas (requiere plan + conteo)
+  // 4-6 — 3 monedas dispersas
   "4-6": level({
     id: "4-6",
     title: "Inventario Pirata",
@@ -728,14 +728,14 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(5, 5), collectCoins(3)],
     obstacles: [rock(3, 3)],
     collectibles: [coin("c1", 1, 4), coin("c2", 4, 1), coin("c3", 5, 3)],
-    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "variable", "repeat", "if-blocked"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat", "if-blocked"],
     optimalSolution: { blockCount: 18 },
-    hints: ["Usá variable para llevar conteo.", "No te olvides: recoger = acción separada."],
-    uiObjectiveText: "Recogé 3 monedas y llegá a (5, 5) usando al menos 1 Variable y 3 Recoger moneda.",
-    jorcMessage: "Tres monedas dispersas. Llevá el conteo con una Variable. Recordá que 'Recoger moneda' es una acción separada para cada una.",
+    hints: ["Las monedas están dispersas.", "Planificá la ruta para recoger todas."],
+    uiObjectiveText: "Recogé 3 monedas y llegá a (5, 5).",
+    jorcMessage: "Tres monedas dispersas por el mapa. Planificá tu ruta para recogerlas todas. ¡Cada moneda cuenta!",
   }),
 
-  // 4-7 — Laberinto suave, más planificación
+  // 4-7 — Laberinto suave
   "4-7": level({
     id: "4-7",
     title: "Bitácora Profunda",
@@ -744,11 +744,11 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(5, 0)],
     obstacles: [rock(1, 4), rock(2, 4), rock(3, 2), rock(4, 2)],
     collectibles: [],
-    availableBlocks: ["forward", "turn-right", "turn-left", "if-blocked", "variable", "repeat"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "if-blocked", "repeat"],
     optimalSolution: { blockCount: 16 },
-    hints: ["Tu variable puede ser un contador de pasos.", "Hacé reglas simples."],
-    uiObjectiveText: "Llegá a la posición (5, 0) usando al menos 1 Variable y 1 Si bloqueado.",
-    jorcMessage: "Laberinto con obstáculos. Tu Variable puede ser un contador de pasos o giros. Combiná con 'Si Bloqueado' para navegar.",
+    hints: ["Hay varios obstáculos.", "Usá Si Bloqueado para navegar."],
+    uiObjectiveText: "Llegá a la posición (5, 0) usando al menos 1 Si bloqueado.",
+    jorcMessage: "Laberinto con obstáculos. Combiná 'Repetir' con 'Si Bloqueado' para navegar automáticamente.",
   }),
 
   // 4-8 — Fragmento 2 W4: diagonal con rocas
@@ -760,12 +760,12 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(5, 5), collectCoins(2)],
     obstacles: [rock(2, 2), rock(3, 3)],
     collectibles: [coin("c1", 1, 3), coin("c2", 4, 2)],
-    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "variable", "repeat", "if-blocked"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat", "if-blocked"],
     optimalSolution: { blockCount: 18 },
-    hints: ["Recordá cuántas veces giraste.", "Si bloqueado + repeat te ordena."],
+    hints: ["Camino diagonal.", "Esquivá las rocas."],
     treasureFragment: fragment(4, 2, "Isla Memoria"),
-    uiObjectiveText: "Recogé 2 monedas y llegá a (5, 5) usando al menos 1 Variable y 2 Recoger moneda.",
-    jorcMessage: "Camino diagonal con rocas. Recordá cuántas veces giraste usando una Variable. 'Si Bloqueado' + 'Repetir' te ordenan. ¡Fragmento!",
+    uiObjectiveText: "Recogé 2 monedas y llegá a (5, 5).",
+    jorcMessage: "Camino diagonal con rocas. Usá 'Si Bloqueado' + 'Repetir' para navegar eficientemente. ¡Fragmento!",
   }),
 
   // 4-9 — 4 monedas con pared vertical
@@ -777,11 +777,11 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(6, 3), collectCoins(4)],
     obstacles: [rock(3, 1), rock(3, 2), rock(3, 4), rock(3, 5)],
     collectibles: [coin("c1", 1, 1), coin("c2", 2, 5), coin("c3", 4, 1), coin("c4", 5, 5)],
-    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "variable", "repeat", "if-blocked"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat", "if-blocked"],
     optimalSolution: { blockCount: 24 },
-    hints: ["Pared vertical con hueco en el centro.", "Planificá el recorrido con conteo."],
-    uiObjectiveText: "Recogé 4 monedas y llegá a (6, 3) usando al menos 1 Variable y 4 Recoger moneda.",
-    jorcMessage: "Pared vertical con hueco central. Llevá el conteo de monedas con una Variable. Planificá bien el recorrido.",
+    hints: ["Pared vertical con hueco en el centro.", "Planificá el recorrido."],
+    uiObjectiveText: "Recogé 4 monedas y llegá a (6, 3).",
+    jorcMessage: "Pared vertical con hueco central. Planificá bien el recorrido para recoger todas las monedas.",
   }),
 
   // 4-10 — Serpiente de rocas: zigzag controlado
@@ -793,11 +793,11 @@ const LEVELS: Record<string, LevelData> = {
     objectives: [reach(6, 6)],
     obstacles: [rock(2, 1), rock(4, 1), rock(2, 3), rock(4, 3), rock(2, 5), rock(4, 5)],
     collectibles: [],
-    availableBlocks: ["forward", "turn-right", "turn-left", "repeat", "if-blocked", "variable"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "repeat", "if-blocked"],
     optimalSolution: { blockCount: 22 },
     hints: ["Ruta en zigzag controlada.", "Repeat para tramos, si-bloqueado para bordes."],
-    uiObjectiveText: "Llegá a la posición (6, 6) usando al menos 1 Variable y 1 Repetir.",
-    jorcMessage: "Serpiente de rocas. Navegación en zigzag controlado. Usá Variable para contar vueltas y 'Repetir' para los tramos.",
+    uiObjectiveText: "Llegá a la posición (6, 6) usando Repetir y Si Bloqueado.",
+    jorcMessage: "Serpiente de rocas. Navegación en zigzag controlado. Usá 'Repetir' para los tramos y 'Si Bloqueado' para los giros.",
   }),
 
   // 4-11 — Preparación final: 5 monedas
@@ -815,11 +815,11 @@ const LEVELS: Record<string, LevelData> = {
       coin("c4", 5, 1),
       coin("c5", 6, 4),
     ],
-    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat", "if-blocked", "variable"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat", "if-blocked"],
     optimalSolution: { blockCount: 28 },
-    hints: ["Las monedas dibujan una ruta.", "Tu variable ayuda a no perder el conteo."],
-    uiObjectiveText: "Recogé 5 monedas y llegá a (6, 0) usando al menos 1 Variable y 5 Recoger moneda.",
-    jorcMessage: "Las monedas dibujan una ruta diagonal. Usá tu Variable para no perder el conteo. ¡Preparándote para el final!",
+    hints: ["Las monedas dibujan una ruta.", "Planificá bien cada tramo."],
+    uiObjectiveText: "Recogé 5 monedas y llegá a (6, 0).",
+    jorcMessage: "Las monedas dibujan una ruta diagonal. Planificá bien cada tramo. ¡Preparándote para el final!",
   }),
 
   // 4-12 — Final W4: 6 monedas en patrón simétrico
@@ -838,12 +838,12 @@ const LEVELS: Record<string, LevelData> = {
       coin("c5", 5, 1),
       coin("c6", 5, 5),
     ],
-    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "variable", "repeat", "if-blocked"],
+    availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "repeat", "if-blocked"],
     optimalSolution: { blockCount: 26 },
-    hints: ["Patrón simétrico: monedas arriba y abajo.", "Optimizá con repeat y conteo."],
+    hints: ["Patrón simétrico: monedas arriba y abajo.", "Optimizá con repeat."],
     treasureFragment: fragment(4, 3, "Isla Memoria"),
-    uiObjectiveText: "Recogé 6 monedas y llegá a (6, 3) usando al menos 1 Variable y 1 Repetir.",
-    jorcMessage: "¡Final! Patrón simétrico de monedas. Usá todo: Variable para conteo, Repetir para optimizar, Si Bloqueado para decidir. ¡Fragmento final!",
+    uiObjectiveText: "Recogé 6 monedas y llegá a (6, 3).",
+    jorcMessage: "¡Final del Santuario! Patrón simétrico de monedas. Usá todo: Repetir para optimizar, Si Bloqueado para decidir. ¡Fragmento final!",
   }),
 
   // =========================
@@ -1112,7 +1112,8 @@ export function getLevelConfig(levelId: string): LevelData {
 
   // Derive theme from world prefix
   const worldPrefix = levelId.split("-")[0]
-  const deriveTheme = (): "default" | "night" | "reef" => {
+  const deriveTheme = (): "default" | "night" | "reef" | "sanctuary" => {
+    if (worldPrefix === "4") return "sanctuary"
     if (worldPrefix === "3") return "reef"
     if (worldPrefix === "2") return "night"
     return "default"
