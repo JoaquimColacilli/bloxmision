@@ -151,9 +151,63 @@ export async function awardLessonRewards(
 
         transaction.update(userRef, {
             jorCoins: currentCoins + coinsToAdd,
+            jorCoinsEarned: (userData.jorCoinsEarned || 0) + coinsToAdd,
             academyProgress: newAcademyProgress
         })
 
         return { coinsAwarded: coinsToAdd, starsEarned: stars }
     })
+}
+
+/**
+ * Mark a block lesson as seen for a user (Intro Modals)
+ */
+export async function markLessonSeen(userId: string | null, blockId: string): Promise<void> {
+    if (!userId) return
+
+    const userRef = doc(db, USERS_COLLECTION, userId)
+
+    // Store as a map for easier querying/updates: "seenLessons.blockId": true
+    // We use dot notation for nested field update
+    await setDoc(userRef, {
+        seenLessons: {
+            [blockId]: true
+        }
+    }, { merge: true })
+}
+
+/**
+ * Get list of all block lessons seen by user
+ */
+export async function getSeenLessons(userId: string | null): Promise<string[]> {
+    if (!userId) return []
+
+    const userRef = doc(db, USERS_COLLECTION, userId)
+    const snap = await getDoc(userRef)
+
+    if (snap.exists()) {
+        const data = snap.data()
+        const seenMap = data.seenLessons || {}
+        return Object.keys(seenMap)
+    }
+    return []
+}
+
+/**
+ * Mark multiple block lessons as seen (Batch)
+ */
+export async function markMultipleLessonsSeen(userId: string | null, blockIds: string[]): Promise<void> {
+    if (!userId || blockIds.length === 0) return
+
+    const userRef = doc(db, USERS_COLLECTION, userId)
+
+    // Construct the update object
+    const updateMap: Record<string, boolean> = {}
+    blockIds.forEach(id => {
+        updateMap[id] = true
+    })
+
+    await setDoc(userRef, {
+        seenLessons: updateMap
+    }, { merge: true })
 }

@@ -119,6 +119,9 @@ export function toAppUser(uid: string, profile: UserProfile): User {
     // Calculate derived XP stats to ensure consistency using the totalXP
     const totalXP = profile.totalXP || 0
 
+    // Cast profile to any to access fields that might not be in UserProfile interface
+    const profileAny = profile as any
+
     return {
         id: uid,
         displayName: profile.displayName,
@@ -139,6 +142,11 @@ export function toAppUser(uid: string, profile: UserProfile): User {
         unlockedFragmentsMap: profile.unlockedFragmentsMap ?? {},
         treasureFragmentsCount: profile.treasureFragmentsCount ?? 0,
         mapCompleted: profile.mapCompleted ?? false,
+        // JorCoins Economy System
+        jorCoins: profileAny.jorCoins ?? 0,
+        jorCoinsEarned: profileAny.jorCoinsEarned ?? 0,
+        jorCoinsSpent: profileAny.jorCoinsSpent ?? 0,
+        equippedItems: profileAny.equippedItems ?? { avatar: 'avatar-default' },
     }
 }
 

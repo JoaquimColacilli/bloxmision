@@ -18,12 +18,12 @@ interface JorcSpriteProps {
 // - Attack: frame-25..27
 // - Hurt: frame-28..29
 const expressionSprites: Record<JorcExpression, string> = {
-  neutral: "/sprites/jorc_raw/frame-01.png", // Idle down
-  happy: "/sprites/jorc_raw/frame-02.png", // Blink (se ve más “amable” que neutral)
-  thinking: "/sprites/jorc_raw/frame-31.png", // Emote 2 (pensando / dudando)
-  surprised: "/sprites/jorc_raw/frame-30.png", // Emote 1 (sorpresa)
-  celebrating: "/sprites/jorc_raw/frame-25.png", // Attack frame (acción/celebración)
-  worried: "/sprites/jorc_raw/frame-32.png", // Emote 3 (preocupado/triste)
+  neutral: "/sprites/jorc_raw/action-01.png", // Idle down
+  happy: "/sprites/jorc_raw/action-02.png", // Blink (se ve más “amable” que neutral)
+  thinking: "/sprites/jorc_raw/action-29.png", // Emote 2 (pensando / dudando)
+  surprised: "/sprites/jorc_raw/action-28.png", // Emote 1 (sorpresa)
+  celebrating: "/sprites/jorc_raw/action-23.png", // Attack frame (acción/celebración)
+  worried: "/sprites/jorc_raw/action-30.png", // Emote 3 (preocupado/triste)
 }
 
 // Background colors for different expressions

@@ -1,15 +1,40 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { SkipForward } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface JorcSpeechCardProps {
     text: string
     mood?: "happy" | "thinking" | "excited"
     onComplete?: () => void
     characterName?: string
+}
+
+// Helper to highlight keywords in plain text nodes
+const highlightKeywords = (text: string) => {
+    // Split by keywords but keep delimiters. Matches "SI", "ENTONCES", "SI NO", "CONDICIÓN" as whole words/phrases
+    // Note: "SI NO" needs to be checked before "SI" if we were using simple replace, but in regex OR it works if ordered or exact match.
+    // Using capturing group () to include the separator in the result
+    const regex = /\b(SI NO|SI|ENTONCES|CONDICIÓN)\b/g
+    const parts = text.split(regex)
+
+    return parts.map((part, i) => {
+        if (part.match(regex)) {
+            return (
+                <span
+                    key={i}
+                    className="mx-0.5 inline-flex transform cursor-default items-center rounded-md bg-ocean-100 px-1.5 py-0.5 text-xs font-bold text-ocean-700 transition-all hover:scale-105 hover:bg-ocean-200"
+                >
+                    {part}
+                </span>
+            )
+        }
+        return part
+    })
 }
 
 export function JorcSpeechCard({
@@ -22,22 +47,22 @@ export function JorcSpeechCard({
     const [isTyping, setIsTyping] = useState(true)
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-    // Clear interval on unmount or when text changes
+    // Tokenize text for safer markdown typing (word by word)
+    // We split by spaces but preserve them to reconstruct the string perfectly
+    const tokens = useMemo(() => {
+        return text.split(/(\s+)/)
+    }, [text])
+
+    // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current)
-            }
+            if (intervalRef.current) clearInterval(intervalRef.current)
         }
     }, [])
 
     useEffect(() => {
-        // Clear any existing interval
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current)
-        }
+        if (intervalRef.current) clearInterval(intervalRef.current)
 
-        // Check for reduced motion preference
         const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
         if (mediaQuery.matches) {
             setDisplayedText(text)
@@ -46,15 +71,19 @@ export function JorcSpeechCard({
             return
         }
 
-        // Reset state
         setDisplayedText("")
         setIsTyping(true)
 
-        let charIndex = 0
+        let tokenIndex = 0
+        // Typing speed: slightly slower interval but showing whole words -> feels natural
         intervalRef.current = setInterval(() => {
-            if (charIndex < text.length) {
-                setDisplayedText(text.substring(0, charIndex + 1))
-                charIndex++
+            if (tokenIndex < tokens.length) {
+                const token = tokens[tokenIndex]
+                // Guard against undefined tokens or weird splits
+                if (token !== undefined) {
+                    setDisplayedText(prev => prev + token)
+                }
+                tokenIndex++
             } else {
                 if (intervalRef.current) {
                     clearInterval(intervalRef.current)
@@ -63,17 +92,14 @@ export function JorcSpeechCard({
                 setIsTyping(false)
                 if (onComplete) onComplete()
             }
-        }, 25)
+        }, 50) // 50ms per token (word/space) is a good reading speed
 
         return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current)
-            }
+            if (intervalRef.current) clearInterval(intervalRef.current)
         }
-    }, [text, onComplete])
+    }, [text, tokens, onComplete])
 
     const handleSkip = () => {
-        // Clear the interval immediately
         if (intervalRef.current) {
             clearInterval(intervalRef.current)
             intervalRef.current = null
@@ -85,11 +111,21 @@ export function JorcSpeechCard({
 
     return (
         <div className="mt-4 flex flex-row items-end gap-4 md:gap-6">
-            {/* Avatar Container - Outside Bubble */}
+            <style jsx global>{`
+                @keyframes blink {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0; }
+                }
+                .cursor-blink {
+                    animation: blink 1s step-end infinite;
+                }
+            `}</style>
+
+            {/* Avatar Container */}
             <div className="shrink-0 flex flex-col items-center">
                 <div className="relative size-16 overflow-hidden rounded-full border-2 border-ocean-500 bg-ocean-100 shadow-md md:size-20">
                     <Image
-                        src="/sprites/jorc_raw/frame-02.png"
+                        src="/sprites/jorc_raw/action-01.png"
                         alt="Jorc"
                         fill
                         className="object-cover scale-125 translate-y-2"
@@ -99,26 +135,70 @@ export function JorcSpeechCard({
             </div>
 
             {/* Dialogue Bubble */}
-            <div className="relative flex-1 rounded-2xl border-2 border-wood-300 bg-sand-50 p-4 shadow-lg md:p-6">
-                {/* Dialogue Triangle - pointing LEFT towards avatar, attached to bubbles side */}
-                <div className="absolute -left-3 bottom-8 size-6 rotate-45 border-b-2 border-l-2 border-wood-300 bg-sand-50" />
+            <div className="relative flex-1 rounded-3xl border-2 border-wood-300 bg-white p-5 shadow-xl md:p-6 transition-all">
+                {/* Dialogue Triangle */}
+                <div className="absolute -left-3 bottom-8 size-6 rotate-45 border-b-2 border-l-2 border-wood-300 bg-white" />
 
                 <div className="relative z-10 space-y-3">
-                    <div className="text-sm leading-relaxed text-gray-800 md:text-base min-h-[60px]">
-                        {displayedText}
-                        {isTyping && <span className="animate-pulse font-bold text-ocean-500">|</span>}
+                    <div className="min-h-[80px] text-[15px] leading-7 text-slate-700 md:text-base">
+                        <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                                // Custom Paragraph with Keyword Highlighting
+                                p: ({ children }) => (
+                                    <p className="mb-3 last:mb-0">
+                                        {Array.isArray(children)
+                                            ? children.map((child, i) => {
+                                                if (typeof child === 'string') return <span key={i}>{highlightKeywords(child)}</span>
+                                                return child
+                                            })
+                                            : typeof children === 'string'
+                                                ? highlightKeywords(children)
+                                                : children
+                                        }
+                                    </p>
+                                ),
+                                // Custom Strong (Bold) -> Highlight Pill
+                                strong: ({ children }) => (
+                                    <strong className="mx-0.5 rounded bg-yellow-100 px-1.5 py-0.5 font-bold text-wood-700 ring-1 ring-yellow-200/50">
+                                        {children}
+                                    </strong>
+                                ),
+                                // Lists
+                                ul: ({ children }) => <ul className="my-3 space-y-2 pl-2">{children}</ul>,
+                                ol: ({ children }) => <ol className="my-3 space-y-2 pl-2">{children}</ol>,
+                                li: ({ children }) => (
+                                    <li className="flex items-start gap-2">
+                                        <div className="mt-2 size-1.5 shrink-0 rounded-full bg-ocean-400" />
+                                        <span className="flex-1">{children}</span>
+                                    </li>
+                                ),
+                                // Blockquote as "Tip" box
+                                blockquote: ({ children }) => (
+                                    <blockquote className="my-3 rounded-xl border-l-4 border-ocean-400 bg-ocean-50 p-4 text-sm text-ocean-900 shadow-sm">
+                                        {children}
+                                    </blockquote>
+                                )
+                            }}
+                        >
+                            {displayedText}
+                        </ReactMarkdown>
+
+                        {isTyping && <span className="ml-1 inline-block h-5 w-2.5 bg-ocean-500 align-sub cursor-blink" />}
                     </div>
 
                     {isTyping && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleSkip}
-                            className="h-8 px-2 text-xs text-ocean-600 hover:text-ocean-800"
-                        >
-                            <SkipForward className="mr-1 size-3" />
-                            Mostrar todo
-                        </Button>
+                        <div className="flex justify-end">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleSkip}
+                                className="h-7 px-3 text-xs font-semibold text-ocean-600 hover:bg-ocean-50 hover:text-ocean-800"
+                            >
+                                <SkipForward className="mr-1.5 size-3.5" />
+                                Mostrar todo
+                            </Button>
+                        </div>
                     )}
                 </div>
             </div>

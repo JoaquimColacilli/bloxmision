@@ -1,9 +1,10 @@
 "use client"
 
-import { ArrowLeft, Star, Coins } from "lucide-react"
+import { ArrowLeft, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { JorCoinIcon } from "@/components/header/jorcoin-display"
 
 interface LessonHeaderProps {
     title: string
@@ -55,7 +56,7 @@ export function LessonHeader({
                 {/* Right: Wallet (Coins & Stars) */}
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5 rounded-full bg-yellow-100/80 px-2 py-1 border border-yellow-200 shadow-sm">
-                        <Coins className="size-4 text-yellow-600 fill-yellow-500" />
+                        <JorCoinIcon className="size-4" />
                         <span className="font-bold text-yellow-700 text-sm">{jorCoins}</span>
                     </div>
 

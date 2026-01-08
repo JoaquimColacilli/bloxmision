@@ -7,41 +7,67 @@ import { cn } from "@/lib/utils"
 import { Direction } from "@/lib/types"
 
 /**
- * Sprite frame configuration per direction
- * - Up (north): frames 3-4 (alternating walk animation)
- * - Right (east): frames 13-16 (walk cycle)
- * - Left (west): frames 17-18 (walk cycle)  
- * - Down (south): frames 3-4 (fallback, no dedicated frames)
+ * CORRECT Sprite Mapping (from slice-grid row-major order)
+ * 
+ * jorc_raw (16 frames):
+ *   - DOWN idle: 01-06, walk: 09-12
+ *   - RIGHT walk: 13-16
+ *   - 07/08 are EMPTY
+ *   - NO LEFT or UP
+ * 
+ * jorc_looking_up (32 frames):
+ *   - UP idle: 01-06, walk: 09-12
+ *   - RIGHT walk: 13-16
+ *   - 07/08 are EMPTY
+ *   - 25-32 are special actions, NOT movement
+ * 
+ * WEST/LEFT: Use RIGHT sprites with CSS mirror (scaleX -1)
  */
-const SPRITE_FRAMES: Record<string, string[]> = {
-    north: [
-        '/sprites/jorc_raw/frame-03.png',
-        '/sprites/jorc_raw/frame-04.png',
-        '/sprites/jorc_raw/frame-06.png',
-        '/sprites/jorc_raw/frame-09.png',
-        '/sprites/jorc_raw/frame-10.png',
-        '/sprites/jorc_raw/frame-11.png',
-        '/sprites/jorc_raw/frame-12.png'
-    ],
-    east: [
-        '/sprites/jorc_raw/frame-13.png',
-        '/sprites/jorc_raw/frame-14.png',
-        '/sprites/jorc_raw/frame-15.png',
-        '/sprites/jorc_raw/frame-16.png'
-    ],
-    west: [
-        '/sprites/jorc_raw/frame-17.png',
-        '/sprites/jorc_raw/frame-18.png'
-    ],
-    south: [
-        '/sprites/jorc_raw/frame-03.png',
-        '/sprites/jorc_raw/frame-04.png',
-        '/sprites/jorc_raw/frame-06.png',
-        '/sprites/jorc_raw/frame-09.png',
-        '/sprites/jorc_raw/frame-10.png',
-        '/sprites/jorc_raw/frame-11.png',
-        '/sprites/jorc_raw/frame-12.png'
-    ]
+const SPRITE_CONFIG = {
+    // UP/NORTH - use jorc_looking_up (back view)
+    north: {
+        idle: ['/sprites/jorc_looking_up/action-01.png'],
+        walk: [
+            '/sprites/jorc_looking_up/action-09.png',
+            '/sprites/jorc_looking_up/action-10.png',
+            '/sprites/jorc_looking_up/action-11.png',
+            '/sprites/jorc_looking_up/action-12.png'
+        ],
+        mirror: false
+    },
+    // DOWN/SOUTH - use jorc_raw (front view)
+    south: {
+        idle: ['/sprites/jorc_raw/action-01.png'],
+        walk: [
+            '/sprites/jorc_raw/action-09.png',
+            '/sprites/jorc_raw/action-10.png',
+            '/sprites/jorc_raw/action-11.png',
+            '/sprites/jorc_raw/action-12.png'
+        ],
+        mirror: false
+    },
+    // RIGHT/EAST - use jorc_raw (side view)
+    east: {
+        idle: ['/sprites/jorc_raw/action-13.png'],
+        walk: [
+            '/sprites/jorc_raw/action-13.png',
+            '/sprites/jorc_raw/action-14.png',
+            '/sprites/jorc_raw/action-15.png',
+            '/sprites/jorc_raw/action-16.png'
+        ],
+        mirror: false
+    },
+    // LEFT/WEST - use SAME sprites as EAST but with CSS mirror
+    west: {
+        idle: ['/sprites/jorc_raw/action-13.png'],
+        walk: [
+            '/sprites/jorc_raw/action-13.png',
+            '/sprites/jorc_raw/action-14.png',
+            '/sprites/jorc_raw/action-15.png',
+            '/sprites/jorc_raw/action-16.png'
+        ],
+        mirror: true // Flip horizontally with scaleX(-1)
+    }
 }
 
 interface DemoStep {
@@ -127,7 +153,7 @@ export function InteractiveDemoPanel({
         if (isPlaying) {
             animTimerRef.current = setInterval(() => {
                 setAnimFrame(prev => prev + 1)
-            }, 150)
+            }, 200) // 5 FPS as recommended
         } else {
             setAnimFrame(0)
             if (animTimerRef.current) {
@@ -143,12 +169,25 @@ export function InteractiveDemoPanel({
         }
     }, [isPlaying])
 
-    // Get sprite for current state
-    const getSprite = () => {
-        const facing = currentStep.jorcState.facing
-        const frames = SPRITE_FRAMES[facing] || SPRITE_FRAMES.east
-        const frameIndex = isPlaying ? (animFrame % frames.length) : 0
-        return frames[frameIndex]
+    // Preload images
+    useEffect(() => {
+        const allSprites = Object.values(SPRITE_CONFIG).flatMap(d => [...d.idle, ...d.walk])
+        allSprites.forEach(src => {
+            const img = new Image()
+            img.src = src
+        })
+    }, [])
+
+    // Get sprite and mirror state for current facing direction
+    const getSpriteInfo = () => {
+        const facing = (currentStep.jorcState.facing as keyof typeof SPRITE_CONFIG) || 'east'
+        const config = SPRITE_CONFIG[facing] || SPRITE_CONFIG.east
+
+        const sprite = isPlaying
+            ? config.walk[animFrame % config.walk.length]
+            : config.idle[0]
+
+        return { sprite, mirror: config.mirror }
     }
 
     // Button handlers
@@ -227,16 +266,19 @@ export function InteractiveDemoPanel({
                                 )}
                             >
                                 {/* Jorc sprite */}
-                                {isJorcHere && (
-                                    <div
-                                        className="absolute inset-0 bg-contain bg-center bg-no-repeat"
-                                        style={{
-                                            backgroundImage: `url(${getSprite()})`,
-                                            transform: 'scale(1.3)',
-                                            imageRendering: 'pixelated'
-                                        }}
-                                    />
-                                )}
+                                {isJorcHere && (() => {
+                                    const { sprite, mirror } = getSpriteInfo()
+                                    return (
+                                        <div
+                                            className="absolute inset-0 bg-contain bg-bottom bg-no-repeat"
+                                            style={{
+                                                backgroundImage: `url(${sprite})`,
+                                                transform: `scale(1.3) translateY(-10%)${mirror ? ' scaleX(-1)' : ''}`,
+                                                imageRendering: 'pixelated'
+                                            }}
+                                        />
+                                    )
+                                })()}
 
                                 {/* Obstacle (rock) */}
                                 {isObstacleHere && !isJorcHere && (

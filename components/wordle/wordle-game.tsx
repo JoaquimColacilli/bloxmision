@@ -357,7 +357,7 @@ export function WordleGame({ userId }: WordleGameProps) {
                     {/* Avatar */}
                     <div className="shrink-0 relative size-12 overflow-hidden rounded-full border-2 border-ocean-500 bg-ocean-100 shadow-sm">
                         <Image
-                            src="/sprites/jorc_raw/frame-02.png"
+                            src="/sprites/jorc_raw/action-02.png"
                             alt="Jorc"
                             fill
                             className="object-cover scale-125 translate-y-1"
