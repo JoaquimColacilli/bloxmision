@@ -79,6 +79,79 @@ export const basicLessons = [
         quiz: { questions: [] }
       }
     }
+  },
+  // NEW: ONBOARDING - MANDATORY FOR EVERYTHING
+  {
+    id: "onboarding",
+    title: "Tu Primera Aventura",
+    duration: "5 min",
+    icon: "Map",
+    description: "Aprende los movimientos básicos para navegar el barco",
+    category: "basic",
+    order: 0, // First
+    world: 1,
+    content: {
+      story: {
+        character: "jorc",
+        dialogue: `¡Atención tripulación! Antes de zarpar hacia aguas peligrosas, necesitamos probar que sabes manejar el barco.\n\nTienes 4 herramientas principales:\n\n**Avanzar**: Mueve el barco una casilla al frente.\n**Girar Derecha/Izquierda**: Rota el barco sin moverse.\n**Recoger Moneda**: ¡Para llevarse el tesoro!\n\n¿Listo para la prueba?`
+      },
+      demo: {
+        gridSize: 4,
+        steps: [
+          { code: ["Avanzar", "Girar Derecha", "Avanzar", "Recoger"], activeLineIndex: -1, jorcState: { x: 0, y: 0, facing: "east" }, message: "Vamos por esa moneda en (1,1)." },
+          { code: ["Avanzar", "Girar Derecha", "Avanzar", "Recoger"], activeLineIndex: 0, jorcState: { x: 1, y: 0, facing: "east" }, message: "Avanzar: un paso al este." },
+          { code: ["Avanzar", "Girar Derecha", "Avanzar", "Recoger"], activeLineIndex: 1, jorcState: { x: 1, y: 0, facing: "south" }, message: "Girar Derecha: ahora miramos al sur." },
+          { code: ["Avanzar", "Girar Derecha", "Avanzar", "Recoger"], activeLineIndex: 2, jorcState: { x: 1, y: 1, facing: "south" }, message: "Avanzar: llegamos a la moneda." },
+          { code: ["Avanzar", "Girar Derecha", "Avanzar", "Recoger"], activeLineIndex: 3, jorcState: { x: 1, y: 1, facing: "south" }, message: "Recoger: ¡Clink! Tesoro guardado." }
+        ]
+      },
+      practice: {
+        exercises: [
+          {
+            id: "onb-1",
+            type: "choice",
+            prompt: "Si quieres ir a la derecha, pero estás mirando al frente, ¿qué haces primero?",
+            options: [
+              { id: "a", label: "Avanzar de costado", isCorrect: false },
+              { id: "b", label: "Usar Girar Derecha", isCorrect: true },
+              { id: "c", label: "Gritarle al barco", isCorrect: false }
+            ],
+            hint: "El barco no camina de costado, primero debe girar."
+          },
+          {
+            id: "onb-2",
+            type: "choice",
+            prompt: "El bloque 'Girar'...",
+            options: [
+              { id: "a", label: "Mueve el barco y gira a la vez", isCorrect: false },
+              { id: "b", label: "Solo rota el barco, no lo mueve de casilla", isCorrect: true },
+              { id: "c", label: "Hace girar el mundo", isCorrect: false }
+            ],
+            hint: "Mira la demo: el barco rota en su lugar."
+          },
+          {
+            id: "onb-3",
+            type: "choice",
+            prompt: "Pasaste por encima de una moneda. ¿Ya es tuya?",
+            options: [
+              { id: "a", label: "Sí, es automático", isCorrect: false },
+              { id: "b", label: "No, tengo que usar 'Recoger Moneda'", isCorrect: true },
+              { id: "c", label: "Solo si el barco es rojo", isCorrect: false }
+            ],
+            hint: "¡Tienes que dar la orden de recoger!"
+          }
+        ]
+      },
+      summary: {
+        keyPoints: [
+          "El barco hace EXACTAMENTE lo que dices en orden.",
+          "Girar NO mueve, solo rota.",
+          "Usa Recoger Moneda para agarrar tesoros.",
+        ],
+        quiz: { questions: [] }
+      }
+    }
+
   }
 ]
 
@@ -95,8 +168,9 @@ export const loopLessons = [
     description: "Aprende a repetir acciones sin escribir lo mismo muchas veces",
     category: "loop",
     order: 1,
-    world: 2,
-    requiredLesson: "lesson-1",
+    world: 1, // Changed from 2 to 1 (Intro at 1-10)
+    requiredLesson: "onboarding", // Chain from onboarding
+
     content: {
       story: {
         character: "jorc",
@@ -308,12 +382,137 @@ export const conditionalLessons = [
     }
   }
 ]
+export const functionLessons = [
+  // NEW: FUNCTIONS - World 5 (Intro)
+  {
+    id: "functions-1",
+    title: "Tus Propios Bloques",
+    duration: "12 min",
+    icon: "Zap", // Represents magic/function
+    description: "Crea hechizos (funciones) para enseñar trucos nuevos a Jorc",
+    category: "function",
+    order: 1,
+    world: 5,
+    requiredLesson: "cond-1",
+    content: {
+      story: {
+        character: "jorc",
+        dialogue: `¡Capitán! Me duelen los brazos de tanto repetir las mismas órdenes para hacer un cuadrado una y otra vez.\n\n¿Y si te enseño un truco de magia? Se llama **FUNCIÓN**.\n\nEs como enseñarme una palabra nueva. Tú me dices:\n"Cuando diga 'HacerCuadrado', camina 4 veces y gira".\n\n¡Y luego solo tienes que decir 'HacerCuadrado'! ¡Magia de programación!`
+      },
+      demo: {
+        gridSize: 5,
+        steps: [
+          { code: ["Definir 'Saltar':", "  Avanzar", "  Avanzar"], activeLineIndex: -1, jorcState: { x: 0, y: 0, facing: "east" }, message: "Primero DEFINIMOS qué hace 'Saltar' (avanza 2 veces)." },
+          { code: ["Llamar 'Saltar'"], activeLineIndex: 0, jorcState: { x: 1, y: 0, facing: "east" }, message: "Ahora LLAMAMOS al hechizo. ¡Jorc ejecuta lo de adentro!" },
+          { code: ["Llamar 'Saltar'"], activeLineIndex: 0, jorcState: { x: 2, y: 0, facing: "east" }, message: "¡Y otra vez! Dos pasos con un solo bloque." }
+        ]
+      },
+      practice: {
+        exercises: [
+          {
+            id: "func-1",
+            type: "choice",
+            prompt: "¿Para qué sirve Definir Función?",
+            options: [
+              { id: "a", label: "Para ponerle nombre al barco", isCorrect: false },
+              { id: "b", label: "Para crear un bloque nuevo con instrucciones dentro", isCorrect: true },
+              { id: "c", label: "Para terminar el nivel", isCorrect: false }
+            ],
+            hint: "Es como crear tu propio bloque personalizado."
+          },
+          {
+            id: "func-2",
+            type: "choice",
+            prompt: "Si Defines una función pero nunca la Llamas...",
+            options: [
+              { id: "a", label: "El código dentro NO se ejecuta", isCorrect: true },
+              { id: "b", label: "Se ejecuta una vez", isCorrect: false },
+              { id: "c", label: "Da error", isCorrect: false }
+            ],
+            hint: "La definición solo 'enseña', la llamada 'hace'."
+          }
+        ]
+      },
+      summary: {
+        keyPoints: [
+          "DEFINIR enseña cómo hacer algo nuevo.",
+          "LLAMAR ejecuta eso que enseñaste.",
+          "¡Úsalo para no escribir lo mismo una y otra vez!",
+        ],
+        quiz: { questions: [] }
+      }
+    }
+  }
+]
+
+export const variableLessons = [
+  // NEW: VARIABLES - World 5 (Level 5-7)
+  {
+    id: "variables-1",
+    title: "La Bitácora del Capitán",
+    duration: "10 min",
+    icon: "Database",
+    description: "Usa la memoria del barco para recordar números y contar tesoros",
+    category: "memory",
+    order: 1,
+    world: 5,
+    requiredLesson: "functions-1",
+    content: {
+      story: {
+        character: "jorc",
+        dialogue: `A veces encontramos tantos tesoros que pierdo la cuenta. ¡Necesitamos anotarlos!\n\nUna **VARIABLE** es como una página en mi bitácora donde anoto un número a lápiz.\n\nPuedo escribir 'Monedas = 0'.\nY cuando recojo una, borro y pongo 'Monedas = 1'.\n¡Así nunca olvido cuánto tenemos!`
+      },
+      demo: {
+        gridSize: 4,
+        steps: [
+          { code: ["Var 'cofre' = 0", "Avanzar", "Cambiar 'cofre' por 1"], activeLineIndex: 0, jorcState: { x: 0, y: 0, facing: "east" }, message: "Creamos la variable 'cofre' en 0." },
+          { code: ["Var 'cofre' = 0", "Avanzar", "Cambiar 'cofre' por 1"], activeLineIndex: 2, jorcState: { x: 1, y: 0, facing: "east" }, message: "¡Encontramos uno! Sumamos 1 a 'cofre'. Ahora vale 1." }
+        ]
+      },
+      practice: {
+        exercises: [
+          {
+            id: "var-1",
+            type: "choice",
+            prompt: "¿Qué es una variable?",
+            options: [
+              { id: "a", label: "Un lugar para guardar/recordar datos", isCorrect: true },
+              { id: "b", label: "Una variación del barco", isCorrect: false },
+              { id: "c", label: "Un camino que cambia", isCorrect: false }
+            ],
+            hint: "Es como la bitácora donde anotas números."
+          },
+          {
+            id: "var-2",
+            type: "choice",
+            prompt: "Si 'puntos = 5' y le sumas 1...",
+            options: [
+              { id: "a", label: "Queda en 5", isCorrect: false },
+              { id: "b", label: "Ahora vale 6", isCorrect: true },
+              { id: "c", label: "Se borra todo", isCorrect: false }
+            ],
+            hint: "¡Exacto! 5 + 1 = 6."
+          }
+        ]
+      },
+      summary: {
+        keyPoints: [
+          "Una VARIABLE guarda información.",
+          "Puedes cambiar su valor (sumar, restar).",
+          "Úsala para contar cosas o recordar estados.",
+        ],
+        quiz: { questions: [] }
+      }
+    }
+  }
+]
 
 // =============================================================================
 // UNIFIED LESSONS ARRAY
 // =============================================================================
 
-export const allLessons = [...basicLessons, ...loopLessons, ...conditionalLessons]
+export const allLessons = [...basicLessons, ...loopLessons, ...conditionalLessons, ...functionLessons, ...variableLessons]
+
 
 /**
  * Get lesson by ID - searches all lessons

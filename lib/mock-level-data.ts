@@ -532,20 +532,21 @@ const LEVELS: Record<string, LevelData> = {
     jorcMessage: "Pasillo largo con varios bloqueos. Combiná 'Repetir' con 'Si Bloqueado' para que el barco navegue solo y gire cuando sea necesario.",
   }),
 
-  // 3-7 — Bifurcación: 2 monedas en caminos opuestos
+  // 3-7 — Zigzag con obstáculos: if-blocked necesario para navegar patrón escalonado
   "3-7": level({
     id: "3-7",
-    title: "Bifurcación",
+    title: "Zigzag de Rocas",
     gridSize: { rows: 6, cols: 6 },
     startPosition: pos(0, 0, "east"),
     objectives: [reach(5, 5), collectCoins(2)],
-    obstacles: [rock(2, 1), rock(2, 2), rock(2, 3)],
-    collectibles: [coin("c1", 1, 4), coin("c2", 4, 1)],
+    // Patrón escalonado que bloquea el camino directo en múltiples puntos
+    obstacles: [rock(2, 0), rock(2, 2), rock(4, 2), rock(4, 4)],
+    collectibles: [coin("c1", 3, 1), coin("c2", 5, 3)],
     availableBlocks: ["forward", "turn-right", "turn-left", "collect-coin", "if-blocked", "repeat"],
-    optimalSolution: { blockCount: 16 },
-    hints: ["Dos caminos: arriba o abajo del muro.", "Si bloqueado te ayuda a elegir."],
+    optimalSolution: { blockCount: 12 },
+    hints: ["Las rocas bloquean en varios puntos.", "Usá 'Si Bloqueado' dentro de 'Repetir' para navegar automáticamente."],
     uiObjectiveText: "Recogé 2 monedas y llegá a (5, 5) usando al menos 1 Si bloqueado y 2 Recoger moneda.",
-    jorcMessage: "Hay dos caminos posibles: arriba o abajo del muro. Usá 'Si Bloqueado' para elegir el camino y recoger ambas monedas.",
+    jorcMessage: "Hay rocas bloqueando en varios puntos del camino. La clave es usar 'Si Bloqueado' dentro de 'Repetir' para que el barco gire solo cuando encuentre un obstáculo.",
   }),
 
   // 3-8 — Fragmento 2 W3 — laberinto medio con if-blocked

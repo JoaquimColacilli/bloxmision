@@ -25,6 +25,7 @@ interface CodeAreaProps {
   onAddBlock: (block: BlockDefinition, index?: number) => void
   onAddBlockInside?: (parentInstanceId: string, block: BlockDefinition, sourceInstanceId?: string) => void
   onRemoveBlockChild?: (parentInstanceId: string, childInstanceId: string) => void
+  onEditChildParams?: (parentInstanceId: string, childInstanceId: string, params: Record<string, string | number | boolean>) => void
   onReorder: (fromIndex: number, toIndex: number) => void
   onRemoveBlock: (index: number) => void
   onDuplicateBlock: (index: number) => void
@@ -41,6 +42,7 @@ export const CodeArea = memo(function CodeArea({
   onAddBlock,
   onAddBlockInside,
   onRemoveBlockChild,
+  onEditChildParams,
   onReorder,
   onRemoveBlock,
   onDuplicateBlock,
@@ -159,9 +161,18 @@ export const CodeArea = memo(function CodeArea({
     [isRunning, isMobile, draggedIndex, dropTargetIndex, blocks.length, maxBlocks, onReorder, onAddBlock],
   )
 
-  const handleBlockDragStart = useCallback((index: number) => {
+  const handleBlockDragStart = useCallback((e: React.DragEvent, index: number) => {
     setDraggedIndex(index)
-  }, [])
+    // Set dataTransfer so containers can receive this block when dropped inside them
+    const block = blocks[index]
+    if (block) {
+      e.dataTransfer.setData("application/json", JSON.stringify({
+        ...block.definition,
+        sourceInstanceId: block.instanceId,
+      }))
+      e.dataTransfer.effectAllowed = "move"
+    }
+  }, [blocks])
 
   const handleBlockDragEnd = useCallback(() => {
     setDraggedIndex(null)
@@ -222,12 +233,30 @@ export const CodeArea = memo(function CodeArea({
 
   const handleParamChange = useCallback(
     (instanceId: string, params: Record<string, string | number | boolean>) => {
+      // First check top-level blocks
       const index = blocks.findIndex((b) => b.instanceId === instanceId)
       if (index !== -1) {
         onEditParams(index, params)
+        return
+      }
+
+      // Helper to check if a block contains the target instanceId recursively
+      const containsBlock = (parent: BlockInstance, targetId: string): boolean => {
+        if (!parent.children) return false
+        return parent.children.some((child) => child.instanceId === targetId || containsBlock(child, targetId))
+      }
+
+      // If not found at top level, search in children and use onEditChildParams callback
+      if (onEditChildParams) {
+        const parentBlock = blocks.find((b) => containsBlock(b, instanceId))
+        if (parentBlock) {
+          // Found the top-level parent that contains the target block
+          onEditChildParams(parentBlock.instanceId, instanceId, params)
+          return
+        }
       }
     },
-    [blocks, onEditParams],
+    [blocks, onEditParams, onEditChildParams],
   )
 
   const handleDuplicate = useCallback(
@@ -267,17 +296,18 @@ export const CodeArea = memo(function CodeArea({
         return
       }
 
-      // Otherwise, check inside children of loop blocks
-      for (const block of blocks) {
-        if (block.children) {
-          const childIndex = block.children.findIndex(c => c.instanceId === instanceId)
-          if (childIndex !== -1) {
-            // Found child - use dedicated callback to remove it
-            if (onRemoveBlockChild) {
-              onRemoveBlockChild(block.instanceId, instanceId)
-            }
-            return
-          }
+      // Helper to check if a block contains the target instanceId recursively
+      const containsBlock = (parent: BlockInstance, targetId: string): boolean => {
+        if (!parent.children) return false
+        return parent.children.some((child) => child.instanceId === targetId || containsBlock(child, targetId))
+      }
+
+      // Otherwise, search recursively in children
+      if (onRemoveBlockChild) {
+        const parentBlock = blocks.find((b) => containsBlock(b, instanceId))
+        if (parentBlock) {
+          onRemoveBlockChild(parentBlock.instanceId, instanceId)
+          return
         }
       }
     },
@@ -296,6 +326,28 @@ export const CodeArea = memo(function CodeArea({
 
   const isEmpty = blocks.length === 0
   const isAtMax = blocks.length >= maxBlocks
+
+  // Recursive helper to render a block with all its nested children
+  const renderBlockWithChildren = (blockToRender: BlockInstance): React.ReactNode => (
+    <Block
+      key={blockToRender.instanceId}
+      block={blockToRender}
+      variant="code"
+      onParamChange={handleParamChange}
+      onDuplicate={handleDuplicate}
+      onDelete={handleDelete}
+      onDropInside={handleDropInside}
+      disabled={isRunning}
+      hideActions={isMobile}
+    >
+      {/* Recursively render this block's children */}
+      {blockToRender.children && blockToRender.children.length > 0 && (
+        <div className="space-y-1">
+          {blockToRender.children.map((child) => renderBlockWithChildren(child))}
+        </div>
+      )}
+    </Block>
+  )
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
@@ -402,7 +454,7 @@ export const CodeArea = memo(function CodeArea({
                     longPressIndex === index && "ring-2 ring-gold-400 ring-offset-1",
                   )}
                   draggable={!isRunning && !isMobile}
-                  onDragStart={() => handleBlockDragStart(index)}
+                  onDragStart={(e) => handleBlockDragStart(e, index)}
                   onDragEnd={handleBlockDragEnd}
                   onClick={() => !isMobile && setFocusedBlockIndex(index)}
                   onTouchStart={() => handleTouchStart(index)}
@@ -430,21 +482,10 @@ export const CodeArea = memo(function CodeArea({
                     disabled={isRunning}
                     hideActions={isMobile}
                   >
-                    {/* Render children for loop blocks */}
+                    {/* Render children recursively */}
                     {block.children && block.children.length > 0 && (
                       <div className="space-y-1">
-                        {block.children.map((childBlock) => (
-                          <Block
-                            key={childBlock.instanceId}
-                            block={childBlock}
-                            variant="code"
-                            onParamChange={handleParamChange}
-                            onDuplicate={handleDuplicate}
-                            onDelete={handleDelete}
-                            disabled={isRunning}
-                            hideActions={isMobile}
-                          />
-                        ))}
+                        {block.children.map((childBlock) => renderBlockWithChildren(childBlock))}
                       </div>
                     )}
                   </Block>

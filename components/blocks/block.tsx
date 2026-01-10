@@ -380,17 +380,17 @@ export const Block = memo(function Block({
                   {/* Always show drop zone for adding more blocks */}
                   <div
                     className={cn(
-                      "flex min-h-[40px] items-center justify-center rounded-lg border-2 border-dashed text-sm font-medium transition-all cursor-copy",
+                      "flex min-h-[60px] items-center justify-center rounded-lg border-2 border-dashed text-sm font-medium transition-all cursor-copy",
                       isLoopDragOver
-                        ? "border-gold-500 bg-gold-100 text-gold-700 scale-105"
-                        : "border-ocean-400/60 bg-ocean-100/40 text-ocean-600 hover:border-ocean-500 hover:bg-ocean-100/60",
+                        ? "border-gold-500 bg-gold-200 text-gold-800 scale-105 shadow-lg"
+                        : "border-ocean-400 bg-ocean-100/60 text-ocean-700 hover:border-ocean-500 hover:bg-ocean-200/70",
                     )}
                     onDragOver={variant === "code" ? handleLoopDragOver : undefined}
                     onDragEnter={variant === "code" ? handleLoopDragOver : undefined}
                     onDragLeave={variant === "code" ? handleLoopDragLeave : undefined}
                     onDrop={variant === "code" ? handleLoopDrop : undefined}
                   >
-                    {isLoopDragOver ? "⬇ Suelta aquí ⬇" : (children ? "Suelta más bloques aquí" : "Arrastra bloques aquí")}
+                    {isLoopDragOver ? "⬇ Suelta aquí ⬇" : (children ? "+ Agregar bloque" : "Arrastra bloques aquí")}
                   </div>
                 </div>
               </div>
@@ -465,17 +465,17 @@ export const Block = memo(function Block({
                   {/* Always show drop zone for adding more blocks */}
                   <div
                     className={cn(
-                      "flex min-h-[40px] items-center justify-center rounded-lg border-2 border-dashed text-sm font-medium transition-all cursor-copy",
+                      "flex min-h-[60px] items-center justify-center rounded-lg border-2 border-dashed text-sm font-medium transition-all cursor-copy",
                       isLoopDragOver
-                        ? "border-gold-500 bg-gold-100 text-gold-700 scale-105"
-                        : "border-ocean-400/60 bg-ocean-100/40 text-ocean-600 hover:border-ocean-500 hover:bg-ocean-100/60",
+                        ? "border-gold-500 bg-gold-200 text-gold-800 scale-105 shadow-lg"
+                        : "border-ocean-400 bg-ocean-100/60 text-ocean-700 hover:border-ocean-500 hover:bg-ocean-200/70",
                     )}
                     onDragOver={variant === "code" ? handleLoopDragOver : undefined}
                     onDragEnter={variant === "code" ? handleLoopDragOver : undefined}
                     onDragLeave={variant === "code" ? handleLoopDragLeave : undefined}
                     onDrop={variant === "code" ? handleLoopDrop : undefined}
                   >
-                    {isLoopDragOver ? "⬇ Suelta aquí ⬇" : (children ? "Suelta más bloques aquí" : "Arrastra bloques aquí")}
+                    {isLoopDragOver ? "⬇ Suelta aquí ⬇" : (children ? "+ Agregar bloque" : "Arrastra bloques aquí")}
                   </div>
                 </div>
               </div>
@@ -654,7 +654,7 @@ export const Block = memo(function Block({
 
 // Helper to infer shape from block type
 function inferShape(type: string): "command" | "conditional" | "loop" | "sensor" | "variable" {
-  if (type === "if" || type === "if-else") return "conditional"
+  if (type === "if" || type === "if-else" || type === "if-blocked") return "conditional"
   if (type === "repeat" || type === "repeat-until") return "loop"
   if (type === "sensor" || type.includes("has-") || type.includes("touching-") || type.includes("-gt")) return "sensor"
   if (type === "variable" || type.includes("var")) return "variable"

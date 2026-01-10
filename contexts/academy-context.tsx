@@ -24,6 +24,7 @@ interface AcademyContextType {
   getQuizScore: (lessonId: string) => number | undefined
   resetProgress: () => void
   refreshProgress: () => Promise<void>
+  isLoading: boolean
 }
 
 const AcademyContext = createContext<AcademyContextType | undefined>(undefined)
@@ -205,6 +206,7 @@ export function AcademyProvider({ children }: { children: ReactNode }) {
         getQuizScore,
         resetProgress,
         refreshProgress,
+        isLoading: !initialized,
       }}
     >
       {children}

@@ -31,10 +31,10 @@ interface FirestoreProgress {
     attempts: number
     rewardClaimed: boolean
     updatedAt: number
-    hint?: string
+    hints?: string[] // Array of all unlocked hints
 }
 
-function toFirestoreProgress(progress: DailyChallengeProgress, hint?: string): FirestoreProgress {
+function toFirestoreProgress(progress: DailyChallengeProgress, hints?: string[]): FirestoreProgress {
     const data: FirestoreProgress = {
         dayNumber: progress.dayNumber,
         guesses: progress.guesses,
@@ -44,9 +44,9 @@ function toFirestoreProgress(progress: DailyChallengeProgress, hint?: string): F
         rewardClaimed: progress.rewardClaimed,
         updatedAt: progress.updatedAt
     }
-    // Only include hint if it has a value (Firestore rejects undefined)
-    if (hint) {
-        data.hint = hint
+    // Only include hints if array has values (Firestore rejects undefined)
+    if (hints && hints.length > 0) {
+        data.hints = hints
     }
     return data
 }
@@ -70,7 +70,7 @@ export function WordleGame({ userId }: WordleGameProps) {
     const [currentGuess, setCurrentGuess] = useState('')
     const [keyStates, setKeyStates] = useState<KeyboardState>({})
     const [revealedWord, setRevealedWord] = useState<string | null>(null)
-    const [currentHint, setCurrentHint] = useState<string | null>(null)
+    const [allHints, setAllHints] = useState<string[]>([])
 
     // UI state
     const [loading, setLoading] = useState(true)
@@ -96,30 +96,43 @@ export function WordleGame({ userId }: WordleGameProps) {
                 const progressSnap = await getDoc(progressRef)
 
                 let progressData: DailyChallengeProgress
-                let savedHint: string | null = null
+                let savedHints: string[] = []
 
                 if (progressSnap.exists()) {
                     const firestoreData = progressSnap.data() as FirestoreProgress
                     // Check for legacy hint format (old technical categories) -> Reset if found
+                    // Also handle migration from old single-hint format to new multi-hint format
                     const legacyKeywords = ['DevOps', 'Infra', 'Seguridad', 'Arquitectura', 'Datos/Storage', 'Messaging']
-                    const isLegacy = firestoreData.hint && legacyKeywords.some(kw => firestoreData.hint?.includes(kw))
+                    const oldHint = (firestoreData as FirestoreProgress & { hint?: string }).hint
+                    const isLegacy = oldHint && legacyKeywords.some(kw => oldHint?.includes(kw))
 
                     if (isLegacy) {
                         console.log('Legacy hint detected, resetting progress')
                         progressData = createEmptyProgress(infoData.dayNumber)
-                        savedHint = null
+                        savedHints = []
                         // Force save reset
                         await setDoc(progressRef, toFirestoreProgress(progressData))
                     } else {
                         progressData = fromFirestoreProgress(firestoreData)
-                        savedHint = firestoreData.hint || null
+                        // Support both old (hint) and new (hints) format
+                        if (firestoreData.hints && firestoreData.hints.length > 0) {
+                            savedHints = firestoreData.hints
+                        } else if (oldHint) {
+                            // Migrate single hint to array
+                            savedHints = [oldHint]
+                        }
                     }
                 } else {
                     progressData = createEmptyProgress(infoData.dayNumber)
                 }
 
                 setProgress(progressData)
-                setCurrentHint(savedHint || infoData.initialHint || null)
+                // Initialize hints: use saved hints or start with initial hint
+                if (savedHints.length > 0) {
+                    setAllHints(savedHints)
+                } else if (infoData.initialHint) {
+                    setAllHints([infoData.initialHint])
+                }
 
                 // Update keyboard states from previous guesses
                 if (progressData.guesses && progressData.feedback) {
@@ -175,12 +188,12 @@ export function WordleGame({ userId }: WordleGameProps) {
     }
 
     // Save progress to Firestore
-    const saveProgress = useCallback(async (newProgress: DailyChallengeProgress, hint?: string) => {
+    const saveProgress = useCallback(async (newProgress: DailyChallengeProgress, hints?: string[]) => {
         if (!info) return
 
         try {
             const progressRef = doc(db, 'users', userId, 'dailyChallenge', String(info.dayNumber))
-            await setDoc(progressRef, toFirestoreProgress(newProgress, hint || undefined))
+            await setDoc(progressRef, toFirestoreProgress(newProgress, hints))
         } catch (err) {
             console.error('Error saving progress:', err)
         }
@@ -244,13 +257,15 @@ export function WordleGame({ userId }: WordleGameProps) {
 
             setProgress(newProgress)
 
-            // Update hint
-            if (data.hint) {
-                setCurrentHint(data.hint)
+            // Accumulate new hint (if provided) to the list
+            let updatedHints = allHints
+            if (data.hint && !allHints.includes(data.hint)) {
+                updatedHints = [...allHints, data.hint]
+                setAllHints(updatedHints)
             }
 
-            // Save to Firestore
-            await saveProgress(newProgress, data.hint)
+            // Save to Firestore with all hints
+            await saveProgress(newProgress, updatedHints)
 
             // Update keyboard
             if (data.feedback) {
@@ -287,7 +302,7 @@ export function WordleGame({ userId }: WordleGameProps) {
         } finally {
             setSubmitting(false)
         }
-    }, [currentGuess, progress, info, saveProgress])
+    }, [currentGuess, progress, info, saveProgress, allHints])
 
     // Physical keyboard support
     useEffect(() => {
@@ -351,9 +366,9 @@ export function WordleGame({ userId }: WordleGameProps) {
                 </p>
             </div>
 
-            {/* Jorc Hint Display */}
-            {currentHint && progress.status === 'playing' && (
-                <div className="flex flex-row items-end gap-3 max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Jorc Hints Display - Shows ALL accumulated hints */}
+            {allHints.length > 0 && progress.status === 'playing' && (
+                <div className="flex flex-row items-start gap-3 max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* Avatar */}
                     <div className="shrink-0 relative size-12 overflow-hidden rounded-full border-2 border-ocean-500 bg-ocean-100 shadow-sm">
                         <Image
@@ -364,10 +379,19 @@ export function WordleGame({ userId }: WordleGameProps) {
                         />
                     </div>
 
-                    {/* Speech Bubble */}
-                    <div className="relative rounded-2xl rounded-bl-none bg-white p-3 shadow-md border border-ocean-100 text-sm text-ocean-800">
-                        <p className="font-medium mb-0.5 text-xs text-ocean-500 uppercase tracking-wider">Pista de Jorc</p>
-                        {currentHint}
+                    {/* Speech Bubble with all hints */}
+                    <div className="relative rounded-2xl rounded-bl-none bg-white p-3 shadow-md border border-ocean-100 text-sm text-ocean-800 flex-1">
+                        <p className="font-medium mb-1.5 text-xs text-ocean-500 uppercase tracking-wider">
+                            Pistas de Jorc ({allHints.length})
+                        </p>
+                        <ul className="space-y-1.5">
+                            {allHints.map((hint, index) => (
+                                <li key={index} className="flex items-start gap-2">
+                                    <span className="text-ocean-400 font-bold text-xs mt-0.5">{index + 1}.</span>
+                                    <span>{hint}</span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 </div>
             )}

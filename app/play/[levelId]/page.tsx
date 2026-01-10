@@ -29,6 +29,9 @@ import { getMockLevelData, getLevelConfig } from "@/lib/mock-level-data"
 import { getBlocksForLevel } from "@/lib/mock-blocks"
 import { getRequiredBlocksForLevel, getBlockLesson } from "@/lib/block-progression"
 import type { Entity, PathStep, BlockDefinition, BlockInstance, ExecutionResult } from "@/lib/types"
+import { useAcademy } from "@/contexts/academy-context"
+import { canAccessLevel } from "@/lib/academy-gating"
+import { LessonRequiredModal } from "@/components/game/lesson-required-modal"
 
 // Mensajes dinámicos de JORC basados en el mundo y nivel
 const getJorcMessages = (worldId: string, levelNum: number) => {
@@ -116,6 +119,11 @@ export default function PlayPage() {
   const newBlockIds = useNewBlocksForLevel(levelId)  // Uses canonical progression to detect blocks introduced in THIS level
   const [showNewBlockIntro, setShowNewBlockIntro] = useState(false)
 
+  // Lesson Gating State (Hard Gating)
+  const [isLessonLocked, setIsLessonLocked] = useState(false)
+  const [missingLessonId, setMissingLessonId] = useState<string | null>(null)
+  const [missingLessonReason, setMissingLessonReason] = useState<string | undefined>(undefined)
+
   // Level locking state
   const [isLevelLocked, setIsLevelLocked] = useState(false)
   const [maxUnlockedLevel, setMaxUnlockedLevel] = useState(1)
@@ -132,6 +140,7 @@ export default function PlayPage() {
 
   // Get cached progress from context
   const { getMaxUnlockedLevel, isWorldUnlocked, isLoading: progressLoading, invalidateCache } = useProgress()
+  const { progress: academyProgress, isLoading: academyLoading } = useAcademy()
 
   // Map numeric world ID to semantic for isWorldUnlocked check
   const worldSemanticMap: Record<string, string> = {
@@ -144,9 +153,29 @@ export default function PlayPage() {
 
   // Level Access Check using cached progress (no Firestore read)
   // Now also checks if the WORLD itself is unlocked (cross-world gating)
+  // Academy Gating Check (Source of Truth)
   useEffect(() => {
-    if (!user || progressLoading) return
+    if (!user || academyLoading) return
 
+    // 1. Check Academy Lessons requirements first
+    // This is the hard gating logic based on blocks introduced/used
+    const completedLessons = academyProgress?.completedLessons || []
+
+    // We pass levelId to the deterministic gating function
+    const gateResult = canAccessLevel(levelId, completedLessons)
+
+    if (!gateResult.allowed) {
+      setIsLessonLocked(true)
+      setMissingLessonId(gateResult.missingLessonId)
+      setMissingLessonReason(gateResult.reason)
+      setAccessCheckDone(true)
+      return // Stop further checks if lesson is missing
+    } else {
+      setIsLessonLocked(false)
+      setMissingLessonId(null)
+    }
+
+    // 2. If lessons are OK, check level progression
     const worldSemanticId = worldSemanticMap[worldNumericId] || "secuencia"
     const worldUnlocked = isWorldUnlocked(worldSemanticId)
 
@@ -164,7 +193,7 @@ export default function PlayPage() {
       }
     }
     setAccessCheckDone(true)
-  }, [user, worldNumericId, requestedLevelNum, progressLoading, getMaxUnlockedLevel, isWorldUnlocked])
+  }, [user, worldNumericId, requestedLevelNum, progressLoading, academyLoading, getMaxUnlockedLevel, isWorldUnlocked, levelId, academyProgress])
 
   useEffect(() => {
     if (newBlockIds.length > 0) {
@@ -359,30 +388,37 @@ export default function PlayPage() {
         let blocksToProcess = [...prev]
         let existingBlock: BlockInstance | null = null
 
+        // Helper to find and remove a block from the tree
+        const findAndRemoveBlock = (blocks: BlockInstance[], targetId: string): { newBlocks: BlockInstance[], foundBlock: BlockInstance | null } => {
+          let found: BlockInstance | null = null
+
+          // Check top level first
+          const index = blocks.findIndex(b => b.instanceId === targetId)
+          if (index !== -1) {
+            found = blocks[index]
+            return { newBlocks: blocks.filter((_, i) => i !== index), foundBlock: found }
+          }
+
+          // Check children recursively
+          const newBlocks = blocks.map(block => {
+            if (block.children && block.children.length > 0) {
+              const result = findAndRemoveBlock(block.children, targetId)
+              if (result.foundBlock) {
+                found = result.foundBlock
+                return { ...block, children: result.newBlocks }
+              }
+            }
+            return block
+          })
+
+          return { newBlocks, foundBlock: found }
+        }
+
         // If sourceInstanceId is provided, we're moving an existing block
         if (sourceInstanceId) {
-          // Find and remove the block from its current position
-          // First, check top-level blocks
-          const topLevelIndex = blocksToProcess.findIndex(b => b.instanceId === sourceInstanceId)
-          if (topLevelIndex !== -1) {
-            existingBlock = blocksToProcess[topLevelIndex]
-            blocksToProcess = blocksToProcess.filter((_, i) => i !== topLevelIndex)
-          } else {
-            // Check inside children of loop blocks
-            blocksToProcess = blocksToProcess.map(block => {
-              if (block.children) {
-                const childIndex = block.children.findIndex(c => c.instanceId === sourceInstanceId)
-                if (childIndex !== -1) {
-                  existingBlock = block.children[childIndex]
-                  return {
-                    ...block,
-                    children: block.children.filter((_, i) => i !== childIndex)
-                  }
-                }
-              }
-              return block
-            })
-          }
+          const result = findAndRemoveBlock(blocksToProcess, sourceInstanceId)
+          blocksToProcess = result.newBlocks
+          existingBlock = result.foundBlock
         }
 
         // Create the child instance (use existing block or create new one)
@@ -392,35 +428,76 @@ export default function PlayPage() {
           params: blockDef.params?.reduce((acc, p) => ({ ...acc, [p.name]: p.default ?? "" }), {}) || {},
         }
 
-        // Add to the target parent
-        return blocksToProcess.map((block) => {
-          if (block.instanceId === parentInstanceId) {
-            return {
-              ...block,
-              children: [...(block.children || []), childInstance],
+        // Helper to add a block to a specific parent in the tree
+        const addBlockToParent = (blocks: BlockInstance[], targetParentId: string, newBlock: BlockInstance): BlockInstance[] => {
+          return blocks.map(block => {
+            if (block.instanceId === targetParentId) {
+              return {
+                ...block,
+                children: [...(block.children || []), newBlock]
+              }
             }
-          }
-          return block
-        })
+            if (block.children) {
+              return {
+                ...block,
+                children: addBlockToParent(block.children, targetParentId, newBlock)
+              }
+            }
+            return block
+          })
+        }
+
+        return addBlockToParent(blocksToProcess, parentInstanceId, childInstance)
       })
     },
     [],
   )
 
-  // Handle removing a block from inside a loop block
+  // Handle removing a block from inside a loop block (supports any nesting depth)
   const handleRemoveBlockChild = useCallback(
-    (parentInstanceId: string, childInstanceId: string) => {
-      setCodeBlocks((prev) =>
-        prev.map((block) => {
-          if (block.instanceId === parentInstanceId && block.children) {
-            return {
-              ...block,
-              children: block.children.filter((c) => c.instanceId !== childInstanceId),
+    (_parentInstanceId: string, childInstanceId: string) => {
+      // Note: parentInstanceId is ignored since we search recursively for the child
+      setCodeBlocks((prev) => {
+        const removeBlockRecursively = (blocks: BlockInstance[]): BlockInstance[] => {
+          return blocks
+            .filter(block => block.instanceId !== childInstanceId) // Remove if found at this level
+            .map(block => {
+              if (block.children) {
+                return {
+                  ...block,
+                  children: removeBlockRecursively(block.children)
+                }
+              }
+              return block
+            })
+        }
+        return removeBlockRecursively(prev)
+      })
+    },
+    [],
+  )
+
+  // Handle editing params of a block inside a loop/conditional block recursively
+  const handleEditChildParams = useCallback(
+    (parentInstanceId: string | undefined, childInstanceId: string, params: Record<string, string | number | boolean>) => {
+      // Note: parentInstanceId might refer to the top-level block OR the immediate parent. 
+      // With the recursive search in code-area, it passes the top-level parent. 
+      // However, a full recursive search doesn't strictly need parentInstanceId if we search for childInstanceId.
+
+      setCodeBlocks((prev) => {
+        const updateParamsRecursively = (blocks: BlockInstance[]): BlockInstance[] => {
+          return blocks.map(block => {
+            if (block.instanceId === childInstanceId) {
+              return { ...block, params }
             }
-          }
-          return block
-        })
-      )
+            if (block.children) {
+              return { ...block, children: updateParamsRecursively(block.children) }
+            }
+            return block
+          })
+        }
+        return updateParamsRecursively(prev)
+      })
     },
     [],
   )
@@ -508,11 +585,25 @@ export default function PlayPage() {
       setJorcMood("error")
       setJorcMessage(engineError.message)
       setShowFailureModal(true)
+      // Auto-reset after a short delay so user can see failure message
+      setTimeout(() => {
+        resetEngine()
+        setShowFailureModal(false)
+        setJorcExpression("neutral")
+        setJorcMessage("¡No te rindas! Modifica tu código e intenta de nuevo.")
+      }, 1500)
     } else {
       setJorcExpression("worried")
       setJorcMood("error")
       setJorcMessage(jorcMessages.objectives_failed)
       setShowFailureModal(true)
+      // Auto-reset after a short delay so user can see failure message
+      setTimeout(() => {
+        resetEngine()
+        setShowFailureModal(false)
+        setJorcExpression("neutral")
+        setJorcMessage("¡Casi lo lográs! Revisa tu código y vuelve a intentar.")
+      }, 1500)
     }
   }, [codeBlocks, execute, resetEngine, engineError, jorcMessages, levelId])
 
@@ -661,6 +752,7 @@ export default function PlayPage() {
         onAddBlock={handleAddBlock}
         onAddBlockInside={handleAddBlockInside}
         onRemoveBlockChild={handleRemoveBlockChild}
+        onEditChildParams={handleEditChildParams}
         onReorder={handleReorder}
         onRemoveBlock={handleRemoveBlock}
         onDuplicateBlock={handleDuplicateBlock}
@@ -797,6 +889,12 @@ export default function PlayPage() {
           isMapComplete={unlockedFragment.isMapComplete}
         />
       )}
+
+      <LessonRequiredModal
+        isOpen={isLessonLocked}
+        missingLessonId={missingLessonId}
+        reason={missingLessonReason}
+      />
     </ProtectedRoute>
   )
 }

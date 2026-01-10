@@ -46,9 +46,9 @@ export const WORLD_DEFINITIONS: WorldDefinition[] = [
     {
         id: "memoria",
         numericId: "4",  // Levels are 4-1, 4-2, etc.
-        name: "Santuario de la Brújula",
-        description: "Guarda y recuerda valores",
-        concept: "Variables",
+        name: "Santuario de la Memoria",
+        description: "Usa tu astucia para recordar patrones",
+        concept: "Patrones y Memoria",
         totalLevels: 12,
         order: 4,
         requiredWorld: "decision",
